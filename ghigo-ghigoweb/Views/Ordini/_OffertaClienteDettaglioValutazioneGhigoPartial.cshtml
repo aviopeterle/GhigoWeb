@@ -1,0 +1,14 @@
+﻿<tr id="offertadettaglio_recid_@Model.RecId" 
+    @Html.Raw(Model.PrezzoConfermato == Model.PrezzoRichiesto && Model.QuantitaConfermata == Model.QuantitaRichiesta 
+        ? string.Empty : "style=\"background-color: yellow\"")>
+    <td>@Model.Riga</td>
+    <td>@Model.CodiceArticolo</td>
+    <td>@Model.Descrizione</td>
+    <td class="center">@DateTimeExt.ToGhigoShortDateString(Model.ScadenzaLotto)</td>
+    <td class="right">@Model.PrezzoConfermato.ToString("N")</td>
+    <td class="right">@Convert.ToInt32(Model.QuantitaConfermata)</td>
+    <td class="right">@Model.PrezzoRichiesto.ToString("N")</td>
+    <td class="right">@Convert.ToInt32(Model.QuantitaRichiesta)</td>
+    <td>&nbsp;</td>
+</tr>
+

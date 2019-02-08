@@ -1,0 +1,161 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<OrdineFornitoreDeposito>
+@{
+    ViewBag.Title = "Ordini da fornitore a deposito";
+}
+<br />
+
+@if (!string.IsNullOrEmpty(ViewBag.Cerca))
+{
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Index", "OrdiniFornitoreDeposito", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+<br />
+<h3>@ViewBag.Title
+
+        <button id="btnCreaNuovoOrdineFornitoreDeposito"
+                class="small pop orange"
+                onclick="CreaNuovoOrdine()">
+            Nuovo ordine fornitore
+        </button>
+
+</h3>
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+    <table class="striped tight" id="tabellaOrdini">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>Codice</th>
+                <th>Fornitore</th>
+                <th>Stato</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+@foreach (var item in Model)
+{
+    <tr id="ordine_recid_@item.RecId">
+        <td>@item.NumeroOrdine</td>
+        <td>@DateTimeExt.ToGhigoShortDateString(item.DataOrdine)</td>
+        <td>@item.CodiceAnagrafica</td>
+        <td>@item.NomeAnagrafica</td>
+        <td>@item.StatoOrdine</td>
+        <td>
+            @if (item.StatoOrdine == "NUOVO")
+            {
+                <text>
+                    @Html.ActionLink("Modifica", "Dettagli", "OrdiniFornitoreDeposito",
+                routeValues: new { numeroordine = item.NumeroOrdine, codicedeposito = item.CodiceDeposito }, htmlAttributes: new { @class = "btn blue" })
+                </text>
+            }
+        </td>
+        <td>
+                <a href="/Report/Print?stored=APP_SP_REPORT_ORDINE_FORNITORE_DEPOSITO&rec_id=@item.RecId" class="btn small pink">
+                    Stampa<br />ordine
+                </a>
+                <a href="/Report/Print?stored=APP_SP_REPORT_ORDINE_FORNITORE_DEPOSITO_STAMPA_INTERNA&rec_id=@item.RecId" class="btn small pink">
+                    Stampa<br />interna
+                </a>
+        </td>
+        <td>
+            @if (item.StatoOrdine != "ANNULLATO" || 1 == 1)
+            {
+                <text>
+                    @Html.ActionLink("Annulla", "CambiaStato", "OrdiniFornitoreDeposito",
+                routeValues: new { recid = item.RecId, stato = "ANNULLATO" }, htmlAttributes: new { @class = "btn small red", onclick = "return confirm('Vuoi davvero ANNULLARE questo ordine?')" })
+                </text>
+            }
+            @if (item.StatoOrdine == "NUOVO" || 1 == 1)
+            {
+                <text>
+                    @Html.ActionLink("Conferma", "CambiaStato", "OrdiniFornitoreDeposito",
+                routeValues: new { recid = item.RecId, stato = "CONFERMATO" }, htmlAttributes: new { @class = "btn small green", onclick = "return confirm('Vuoi davvero CONFERMARE questo ordine?')" })
+                </text>
+            }
+        </td>
+    </tr>
+}
+          </tbody>
+    </table>
+
+@if (!ViewBag.Tutti)
+{
+    <text>
+        @Html.ActionLink("Visualizza tutti gli ordini", "Index", "OrdiniFornitoreDeposito", routeValues: new { tutti = true }, htmlAttributes: new { @class = "btn small blue" })
+    </text>
+}
+
+<div class="hide">
+    <form id="formNuovoOrdine" style="width: 450px" class="vertical">
+        <fieldset>
+            <legend>Nuovo ordine fornitore</legend>
+            <input type="hidden" name="CodiceAzienda" value="@ViewData["CodiceAzienda"]" />
+            <input type="hidden" name="CodiceDeposito" value="@ViewData["CodiceDeposito"]" />
+            <label for="txtCodiceFornitore">Fornitore</label>
+            @Html.DropDownList("CodiceAnagrafica", ViewData["CodiceAnagrafica"] as SelectList)
+            <label for="txtCodicePagamento">Pagamento</label>
+            @Html.DropDownList("CodicePagamento", ViewData["CodicePagamento"] as SelectList)
+            <label for="txtDataConsegna">Data di consegna</label>
+            <input type="text" id="txtDataConsegna" name="DataConsegna" style="width: 200px" value="@DateTime.Today.ToShortDateString()" />
+            <label for="txtNote">Note</label>
+            <input type="text" id="txtNote" name="Note" />
+        </fieldset>
+        <button id="btnConfermaNuovoOrdine" class="orange" style="float: right">Crea nuovo ordine</button>
+    </form>
+</div>
+
+@section scripts {
+
+    <script type="text/javascript">
+        function CreaNuovoOrdine(recid) {
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formNuovoOrdine'
+            });
+
+            $('#txtCodiceFornitore').focus().select();
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left', timeOut: 10000 };
+
+            // crea nuovo ordine
+            $("#btnConfermaNuovoOrdine").click(function (e) {
+                $.post('@Url.Action("Nuovo", "OrdiniFornitoreDeposito")',
+                    $('#formNuovoOrdine').serialize(),
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                            setTimeout(function () {
+                                document.location.href = '@Url.Action("Index")';
+                                        }, 1000);
+
+                                    } else {
+                                        toastr.error(data.Messaggio);
+                                    }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+                return false;
+            });
+        });
+    </script>
+}

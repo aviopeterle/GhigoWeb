@@ -1,0 +1,17 @@
+﻿<tr id="notaaccprivata_recid_@Model.RecId">
+    <td>@Model.NumeroDocumento</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataDocumento)</td>
+    <td>@Model.DestinazioneRagioneSociale</td>
+    <td class="right">@Model.TotaleDocumento.ToString("N")</td>
+    <td class="center">
+        <a id="btnPDF_recid_@Model.RecId" 
+            class="btn small pop blue" 
+            target="_blank"
+            href="/Report/Print?stored=APP_SP_REPORT_NOTA_CREDITO_PRIVATA&rec_id=@Model.RecId">
+            Nota Credito
+        </a>
+        @Html.ActionLink("Elimina", "EliminaNotaAccreditoPrivata", "Fatture",
+        routeValues: new { recid = Model.RecId }, htmlAttributes: new { @class = "btn small red", onclick = "return confirm('Vuoi davvero eliminare questa nota di credito?')" })
+    </td>
+</tr>
+

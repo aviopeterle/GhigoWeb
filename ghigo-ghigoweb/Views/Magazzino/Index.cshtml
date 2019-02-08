@@ -1,0 +1,206 @@
+﻿@using GhigoWeb.Models
+@using GhigoWeb.Extensions
+
+@model IEnumerable<StatoConferimento>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<div class="left">
+    <form method="get" class="vertical">
+        <fieldset>
+            <legend>Parametri di ricerca</legend>
+            <table border="0">
+                <tr>
+                    <td>
+                        <label for="ordineFornitore">Ordine Fornitore</label>
+                        <input class="small" id="ordineFornitore" name="ordineFornitore" type="text" placeholder="Ordine Fornitore" style="width: 200px" value="@ViewBag.OrdineFornitore" />
+                    </td>
+                    <td>
+                        <label for="codiceFornitore">Fornitore</label>
+                        <input class="small" id="codiceFornitore" name="codiceFornitore" type="text" placeholder="Codice Fornitore" style="width: 200px" value="@ViewBag.CodiceFornitore" />
+                    </td>
+                    <td>
+                        <label for="cliente">Cliente</label>
+                        <input class="small" id="cliente" name="cliente" type="text" placeholder="Cliente" style="width: 200px" value="@ViewBag.Cliente" />
+                    </td>
+                    <td>
+                        <label for="articolo">Articolo</label>
+                        <input class="small" id="articolo" name="articolo" type="text" placeholder="Articolo" style="width: 200px" value="@ViewBag.Articolo" />
+                    </td>
+                    <td>
+                        <input type="submit" value="Cerca" class="orange" />
+                    </td>
+                </tr>
+            </table>
+            <input type="checkbox" name="residuo" value="true" onclick="this.form.submit();" @(ViewBag.Residuo ? "checked" : string.Empty) /> A residuo
+            <input type="checkbox" name="da_vendere" value="true" onclick="this.form.submit();" @(ViewBag.DaVendere ? "checked" : string.Empty) /> Da vendere
+            <input type="checkbox" name="anche_chiusi" value="true" onclick="this.form.submit();" @(ViewBag.AncheChiusi ? "checked" : string.Empty) /> Anche chiusi
+            <input type="checkbox" id="carico_esterno" value="true" /> Prepara carico esterno 
+            <button id="totaleCaricoEsterno"
+                    class="small pop pink hide"
+                    style="width: 80px"
+                    onclick="CreaCaricoEsterno(); return false;">
+                0.00
+            </button>
+        </fieldset>
+    </form>
+</div>
+
+@if(Model.Count() == 0) {
+    <h3>Nessun risultato disponibile (oppure nessun filtro settato!)</h3>
+}
+else
+{
+    var ordini_fornitori = Model.Select(s => s.NumeroOrdineFornitore).Distinct();
+
+    <div id="accordion" class="hide">
+
+        @foreach (var ordine_fornitore in ordini_fornitori)
+        {
+            var righe = Model.Where(s => s.NumeroOrdineFornitore == ordine_fornitore);
+            var prima_riga = righe.First();
+            
+            <h3 class="left" id="h3_@prima_riga.NumeroOrdineFornitore">OF @prima_riga.NumeroOrdineFornitore - @prima_riga.DescrizioneOrdineFornitore (@prima_riga.DataCreazioneOrdineFornitore.ToShortDateString()) Clienti (@prima_riga.RiferimentoCliente)</h3>
+            <div>
+            <table class="striped" id="tabellaOrdine_@prima_riga.NumeroOrdineFornitore" style="font-size: smaller">
+                <thead>
+                    <tr>
+                        <th>Cod. Articolo</th>
+                        <th>Descrizione Articolo</th>
+                        <th>Fornitore</th>
+                        <th class="right">Richiesta</th>
+                        <th class="right">Offerta Tot</th>
+                        <th class="right">Offerta</th>
+                        <th class="right">Conferita</th>
+                        <th class="right">Da Vendere</th>
+                        <th class="right">In Arrivo</th>
+                        <th class="right">Residua</th>
+                        <th class="right">Valore</th>
+                        <th>Note Ufficio</th>
+                        <th>Note Magazzino</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in righe)
+                    {
+                        <tr>
+                            <td>@item.CodiceArticolo</td>
+                            <td style="width: 200px">@item.DescrizioneArticolo</td>
+                            <td>@item.Fornitore (@item.CodiceFornitore)</td>
+                            <td class="right">@item.QtaRichiesta.ToSmartInt("-")</td>
+                            <td class="right">@item.QtaOffertaTotale.ToSmartInt("-")</td>
+                            <td class="right">@item.QtaOfferta.ToSmartInt("-")</td>
+                            <td class="right" style="background-color: @(@item.QtaResidua == 0 && item.QtaConferita > 0? "#00FF00" : "transparent")">@item.QtaConferita.ToSmartInt("-")</td>
+                            <td class="right" style="background-color: @(@item.QtaDaVendere > 0 ? "#FFFF00" : "transparent")">@item.QtaDaVendere.ToSmartInt("-")</td>
+                            <td class="right" style="background-color: @(@item.QtaEsterna > 0 ? "#CCFF66" : "transparent")">
+                                @item.QtaEsterna.ToSmartInt("-")
+                            </td>
+                            <td class="right" style="background-color: @(@item.QtaResidua > 0 ? "#FF6633" : "transparent")">
+                                @item.QtaResidua.ToSmartInt("-")
+                                <input type="text" id="txtQuantita_@item.RecId" data-attribute="@item.RecId" name="txtQuantita_@item.RecId" style="width: 40px" class="right hide" value="0" />
+                            </td>
+                            <td class="right">
+                                @item.ValoreUnitario.ToSmartInt("-")
+                                <input type="text" id="txtValore_@item.RecId" data-attribute="@item.RecId" name="txtValore_@item.RecId" style="width: 80px" class="right hide" value="@item.ValoreUnitario" />
+                            </td>
+                            <td><span class="editable" data-type="textarea" data-url="@Url.Action("AggiornaNoteUfficio")" data-attribute="@item.RecId" data-ok-button="Ok" data-cancel-button="Annulla">@item.NoteUfficio</span></td>
+                            <td><span class="editable" data-type="textarea" data-url="@Url.Action("AggiornaNoteMagazzino")" data-attribute="@item.RecId" data-ok-button="Ok" data-cancel-button="Annulla">@item.NoteMagazzino</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+    }
+
+    </div>
+    <br />
+
+}
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script src="~/Scripts/jinplace-1.0.1.min.js"></script>
+    <script type="text/javascript">
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            $('#wrap').css("width", "90%");
+
+            // accordion
+            $("#accordion").show().accordion({
+                active: false,
+                autoHeight: false,
+                collapsible: true
+            });
+
+            $('.editable').jinplace();
+
+            $("input[name^='txtValore']").numeric({ decimal: true, negative: false });
+            $("input[name^='txtQuantita']").numeric({ decimal: false, negative: false });
+
+            $('#carico_esterno').change(function () {
+                if ($("#carico_esterno").is(":checked")) {
+                    $("input[name^='txtValore'], input[name^='txtQuantita'], #totaleCaricoEsterno").show();
+                } else {
+                    $("input[name^='txtValore'], input[name^='txtQuantita'], #totaleCaricoEsterno").hide();
+                }
+            });
+
+            $("input[name^='txtValore'], input[name^='txtQuantita']").change(function () {
+                var totale = 0.0;
+                $("input[name^='txtQuantita']").each(function (index, element) {
+                    var qta = parseFloat($(this).val());
+                    if (qta > 0)
+                    {
+                        var recId = $(this).attr('data-attribute');
+                        var valore = parseFloat($("#txtValore_" + recId).val().replace(',','.'));
+                        totale = totale + qta * valore;
+                    }
+                });
+                $('#totaleCaricoEsterno').text(totale.toFixed(2));
+            });
+        });
+
+        function CreaCaricoEsterno() {
+            var lista_qta = {};
+            var lista_valori = {};
+
+            $("input[name^='txtQuantita']").each(function (index, element) {
+                var qta = parseFloat($(this).val());
+                if (qta > 0) {
+                    var recId = $(this).attr('data-attribute');
+                    var valore = parseFloat($("#txtValore_" + recId).val().replace(',', '.'));
+
+                    lista_qta[recId] = qta;
+                    lista_valori[recId] = valore;
+                }
+            });
+
+            if ($.isEmptyObject(lista_qta)) {
+                alert('Nessuna quantità da caricare!');
+                return;
+            }
+
+            $.post('@Url.Action("CreaCaricoEsterno")',
+            {
+                lista_qta: lista_qta,
+                lista_valori: lista_valori
+            },
+            function (data, success, xhr) {
+                if (data.Successo) {
+                    toastr.success(data.Messaggio);
+                    window.open("/Report/Print?stored=APP_SP_REPORT_CARICO_ESTERNO&rec_id=" + data.RecId, "_blank", "");
+                    setTimeout(function () {
+                        document.location.href = '@Url.Action("Index")';
+                    }, 1000);
+                } else {
+                    toastr.error(data.Messaggio);
+                }
+            }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+        }
+    </script>
+}

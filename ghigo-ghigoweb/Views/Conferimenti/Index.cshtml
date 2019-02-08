@@ -1,0 +1,228 @@
+﻿@model ConferimentiViewModel
+@{
+    ViewBag.Title = "Conferimenti";
+}
+<br />
+
+@if(!string.IsNullOrEmpty(ViewBag.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Index", "Deposito", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Articolo, parola, barcode" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+<div id="accordion" class="hide">
+
+@foreach (var numero_ordine in Model.NumeroOrdineConferimenti.Keys)
+{
+    var prima_riga = Model.NumeroOrdineConferimenti[numero_ordine][0];
+    <h3 class="left">
+        Ord. @numero_ordine, chiude @prima_riga.DataChiusura.ToGhigoShortDateString(), consegna @prima_riga.DataConsegna.ToGhigoShortDateString()
+        @if (!string.IsNullOrEmpty(prima_riga.NoteFornitore))
+        {
+            var len = prima_riga.NoteFornitore.Length;
+            len = len > 40 ? 40 : len;
+            <u>&nbsp; @prima_riga.NoteFornitore.Substring(0, len) &nbsp;</u>
+        }
+        @if (!string.IsNullOrEmpty(prima_riga.DescrizioneDepositoWeb))
+        {
+            <span style="font-size: smaller; color: red; float: right">&nbsp; @prima_riga.DescrizioneDepositoWeb &nbsp;</span>
+        }
+    </h3>
+    <div>
+    <table class="striped tight" id="tabellaOrdine_@numero_ordine" style="font-size: smaller">
+        <thead>
+            <tr>
+                <th>Articolo</th>
+                <th style="width: 99%">Descrizione</th>
+                <th class="right">Prezzo</th>
+                <th class="right">Ricarico</th>
+                <th class="center">Scadenza</th>
+                <th class="right">Confermata</th>
+                <th class="right">Conferita</th>
+                <th class="right">Da Conferire</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.NumeroOrdineConferimenti[numero_ordine]) {
+                @Html.Partial("_ConferimentoPartial", item);
+            }
+        </tbody>
+    </table>
+  </div>
+}
+
+</div>
+
+<div class="hide">
+    <form id="formConferimento" style="width: 400px" class="vertical">
+        <input type="hidden" id="formConferimento_recid" name="formConferimento_recid" />
+        <input type="hidden" id="formConferimento_codicearticolo" name="formConferimento_codicearticolo" />
+        <h5><span id="formConferimento_articolo">articolo</span></h5>
+        <br />
+        Minima scadenza lotto: <span id="formConferimento_datascadenza">data scadenza</span>
+        <fieldset>
+            <legend>Nuovo Conferimento</legend>
+            <label for="txtQuantitaConferimento">Quantita</label>
+            <input type="text" id="txtQuantitaConferimento" style="width: 80px" class="right"/>
+            <label for="txtLotto">Lotto</label>
+            <input type="text" id="txtLotto" />
+            <label for="txtCostoNettoUnitario">Costo Unitario</label>
+            <input type="text" id="txtCostoNettoUnitario" />
+            <label for="txtScadenzaLottoMese">Mese Scadenza</label>
+            <input type="text" id="txtScadenzaLottoMese" />
+            <label for="txtScadenzaLottoAnno">Anno Scadenza</label>
+            <input type="text" id="txtScadenzaLottoAnno" />
+        </fieldset>
+        <button id="btnInviaConferimento" class="orange" style="float: right">Invia Conferimento</button>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+        // data aggiornamento
+        var quando = @Model.Quando;
+
+        // richiamo dialog
+        function ApriDialog(recid) {
+            $('#formConferimento_recid').val(recid);
+
+            var massima = parseInt($('#QuantitaDaConferire_recid_' + recid).html());
+            var articolo = $('#Articolo_recid_' + recid).html();
+            var codice_articolo = $('#CodiceArticolo_recid_' + recid).html();
+            var datascadenza = $('#DataScadenza_recid_' + recid).html();
+
+            $('#txtQuantitaConferimento').val(massima);
+            $('#txtLotto').val('');
+            $('#txtScadenzaLottoMese').val(0);
+            $('#txtScadenzaLottoAnno').val(0);
+            $('#txtCostoNettoUnitario').val('0,00');
+            $('#formConferimento_codicearticolo').val(codice_articolo);
+            $('#formConferimento_articolo').html(articolo);
+            $('#formConferimento_datascadenza').html(datascadenza);
+
+            $.fancybox({  
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formConferimento'
+            });
+
+            $('#txtQuantitaConferimento').focus().select();
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // accordion
+            $( "#accordion" ).show().accordion({
+                active: false,
+                autoHeight: false,
+                collapsible: true
+            });
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            // input solo numerici
+            $("#txtScadenzaLottoAnno").numeric({ decimal: false, negative: false });
+            $("#txtScadenzaLottoMese").numeric({ decimal: false, negative: false });
+            $("#txtQuantitaConferimento").numeric({ decimal: false, negative: false });
+            $("#txtCostoNettoUnitario").numeric({ decimal: ',', negative: false });
+
+            // dati lotto
+            $('#txtLotto').change(function (e) {
+                $.post('@Url.Action("OttieniDatiLotto", "DaTrasferire")',
+                        {
+                            articolo: $('#formConferimento_codicearticolo').val(),
+                            lotto: $('#txtLotto').val()
+                        },
+                        function (data, success, xhr) {
+                            if (data.Successo) {
+                                $("#txtScadenzaLottoAnno").val(data.AnnoScadenza);
+                                $("#txtScadenzaLottoMese").val(data.MeseScadenza);
+                                $("#txtCostoNettoUnitario").val(data.Costo);
+                            }
+                        }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+            });
+
+            // invio offerta
+            $("#btnInviaConferimento").click(function () {
+
+                $.fancybox.close();
+
+                var recid = parseInt($('#formConferimento_recid').val());
+                var value = parseInt($('#txtQuantitaConferimento').val());
+                if(isNaN(value))
+                {
+                    $(this).val(0);
+                    value = 0;
+                }
+
+                $.post('@Url.Action("SalvaConferimento")', 
+                    { 
+                        recid: recid, 
+                        value: value,
+                        lotto: $('#txtLotto').val(),
+                        scadenzalottomese: $('#txtScadenzaLottoMese').val(),
+                        scadenzalottoanno: $('#txtScadenzaLottoAnno').val(),
+                        costo: $('#txtCostoNettoUnitario').val()
+                    }, 
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                        AggiornaItem(data);
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+                return false;
+            });
+
+            // refresh continuo ogni 10 sec
+            setInterval(function() {
+
+                $.post('@Url.Action("AggiornaElencoConferimenti")', { quando : quando }, 
+                    function (data, success, xhr) {
+                        if(data.Quando > 0) quando = data.Quando;
+                        for (var i = 0; i < data.Items.length; i++)
+                        {
+                            AggiornaItem(data.Items[i]);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+            }, 1000 * 10);
+
+        });
+
+        // aggiorna item
+        function AggiornaItem(data) {
+            if(data.RecId == 0) return;
+
+            var trovato = $('#offerta_recid_' + data.RecId).length > 0;
+            if(trovato) {
+                $('#QuantitaConfermata_recid_' + data.RecId).html(data.QuantitaConfermata);
+                $('#QuantitaConferita_recid_' + data.RecId).html(data.QuantitaConferita);
+                $('#QuantitaDaConferire_recid_' + data.RecId).html(data.QuantitaDaConferire);
+                if(!data.Visibile) {
+                    $('#offerta_recid_' + data.RecId).remove();
+                } else {
+                    $('#offerta_recid_' + data.RecId).effect("highlight", {}, 3000);
+                }
+            }
+
+        }
+    </script>
+}

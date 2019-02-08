@@ -1,0 +1,266 @@
+﻿@using GhigoWeb.Models
+@using System.Reflection
+@using System.Collections.Generic
+
+@model IEnumerable<PropostaOrdineCliente>
+@{
+    ViewBag.Title = "Ordini Cliente";
+    bool pagamentoAttivo = ViewBag.PagamentoAttivo == null ? false : (bool)ViewBag.PagamentoAttivo;
+    bool agente = ViewBag.Agente == null ? false : (bool)ViewBag.Agente;
+}
+
+<h3>Proposta d'acquisto
+    <a class="btn small pop blue"
+       target="_blank"
+       id="pdf"
+       href="/Report/Print?stored=APP_SP_REPORT_ORDINE_PROPOSTA_CLIENTE&codiceazienda=@ViewBag.CodiceAzienda&codiceanagrafica=@ViewBag.CodiceAnagrafica&codicecliente=@ViewBag.CodiceCliente&trasportogratuito=@(ViewBag.TrasportoGratuito ? "true" : "false")">
+        Pdf
+    </a>
+    @Html.ActionLink("Elimina tutto", "SvuotaProposta", new { codiceCliente = ViewBag.CodiceCliente }, new { @class = "btn small pop pink", onclick = "return confirm('Vuoi davvero eliminare integralmente la proposta?');" })
+</h3>
+
+    <div class="right">
+        <form method="get" action="@Url.Action("Listino")">
+            <label for="txtCerca">Cerca</label>
+            <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Articolo, parola, barcode" style="width: 200px" />
+            <input type="submit" value="Cerca" />
+            <input type="hidden" id="codiceCliente" name="codiceCliente" value="@ViewBag.CodiceCliente" />
+        </form>
+    </div>
+
+    <table class="striped tight" id="tabellaProposta">
+        <thead>
+            <tr>
+                <th>Articolo</th>
+                <th>Descrizione</th>
+                <th class="center">Scadenza</th>
+                <th class="right">Qta</th>
+                <th class="right">Prezzo Listino</th>
+                <!--<th class="right">Prezzo Proposto</th>-->
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+@foreach (var item in Model) {
+    @Html.Partial("_PropostaOrdineClientePartial", item)
+}
+          </tbody>
+    </table>
+
+<br />
+<br />
+    
+Scegli il listino  &nbsp;&nbsp;
+
+@Html.DropDownList("selProduttore", (SelectList)ViewBag.Produttori, new { size = 5, style = "width: 300px" })
+<button id="btnListino" class="small green">Vai al listino</button>
+
+<form id="formOfferta" style="width: 910px" class="vertical">
+@{
+    bool potenziale = ViewBag.Cliente is ClientePotenziale;
+    object cliente = potenziale ? (object)(ViewBag.Cliente as ClientePotenziale) : (object)(ViewBag.Cliente as Cliente);
+    
+    if (cliente != null)
+    {
+        string[] esclusioni = new string[] { "RecId", "CodiceAnagrafica" };
+        PropertyInfo[] pis = cliente.GetType().GetProperties().ToArray();
+        int recid = Convert.ToInt32(pis.Single(p => p.Name == "RecId").GetValue(cliente));
+
+        <fieldset>
+            <legend>Dati cliente</legend>
+            <table>
+@foreach (var pi in pis.Where(p => !esclusioni.Contains(p.Name)))
+{
+                <tr>
+                    <td>@pi.Name</td>
+                    <td><b>@Convert.ToString(ViewData.Keys.Contains(pi.Name) ? ViewData[pi.Name] : pi.GetValue(cliente))</b></td>
+                </tr>
+}
+            </table>
+            @if(potenziale)
+            {
+                @Html.ActionLink("Modifica dati cliente", "ModificaClientePotenziale", new { cli_recid = recid }, new { @class = "btn pop orange" })
+            }
+        </fieldset>
+    }
+}
+    <fieldset>
+        <legend>Dati proposta</legend>
+        <input type="hidden" name="codiceazienda" id="codiceazienda" value="@ViewBag.CodiceAzienda" />
+        <input type="hidden" name="codiceanagrafica" id="codiceanagrafica" value="@ViewBag.CodiceAnagrafica" />
+        <table>
+            <tr>
+                <td>
+                    <input type="hidden" name="selCliente" id="selCliente" value="@ViewBag.CodiceCliente" />
+                    <input type="hidden" name="selDestinazione" id="selDestinazione" value="[Sede]" />
+                    <label for="txtRiferimentoCliente">N. ordine (vs. riferimento)</label>
+                    <input type="text" id="txtRiferimentoCliente" name="txtRiferimentoCliente" />
+                    <button id="btnInviaOfferta" class="orange">Invia Proposta</button>
+                </td>
+                <td>
+                    @if (pagamentoAttivo)
+                    {
+                        <text>
+                        <label for="radPagamento">Pagamento tramite</label>
+                        <br /><input type="radio" name="radPagamento" value="Bonifico" /> Bonifico
+                        <br /><input type="radio" name="radPagamento" value="PayPal" /> PayPal
+                        <!--<br /><input type="radio" name="radPagamento" value="CC" /> Carta di credito-->
+                        <br /><input type="radio" name="radPagamento" value="CartaSi" checked="checked" /> Carta Sì 
+                        </text>
+                    }
+                    else
+                    {
+                        <input type="hidden" name="radPagamento" value="Bonifico" />
+                    }
+                    <br /><br />
+                    @if(agente)
+                    {
+                        <text>
+                        <input type="checkbox" name="chkTrasportoGratuito" id="chkTrasportoGratuito"  value="true" @(ViewBag.TrasportoGratuito ? "checked=\"checked\"" : string.Empty) /> Trasporto gratuito 
+                        </text>
+                    }
+                    <input type="hidden" name="chkTrasportoGratuito" value="false" />
+                </td>
+                <td>
+                    <label for="txtNote">Note</label>
+                    <textarea id="txtNote" name="txtNote" style="height: 140px; width: 200px" placeholder="Note proposta"></textarea>
+                </td>
+                <td style="border-left: 1px solid">
+                @if(!Roles.IsUserInRole("Rivenditore") && (!ViewBag.Agente))
+                {
+                    <text>
+                                    Offerta ricorrente <input type="checkbox" id="chkRicorrente" name="chkRicorrente" value="true"/> 
+                    </text>
+                }
+                    <input type="hidden" name="chkRicorrente" value="false" />
+                    <div id="offertaRicorrente" style="display: none">
+                        <label for="dateInizioRicorrenza">Dalla data</label>
+                        <input type="text" id="dateInizioRicorrenza" name="dateInizioRicorrenza" value="@DateTime.Today.ToShortDateString()" />
+                        <label for="selPeriodo">Ricorrenza</label>
+                        @Html.DropDownList("selPeriodo", (SelectList)ViewBag.Periodi)
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+    <fieldset>
+        <legend>Totali</legend>
+        <table border="0">
+            <tr>
+                <td>
+                    <label for="labelImponibile">Netto merce</label>
+                    <input type="text" id="imponibile" value="@ViewBag.Imponibile" readonly="readonly" style="text-align: right" />
+                </td>
+                <td>
+                    <label for="labelTrasporto">Trasporto</label>
+                    <input type="text" id="trasporto" value="@ViewBag.Trasporto" readonly="readonly" style="text-align: right" />
+                </td>
+                <td>
+                    <label for="labelImposta">Imposta</label>
+                    <input type="text" id="imposta" value="@ViewBag.Imposta" readonly="readonly" style="text-align: right" />
+                </td>
+                <td>
+                    <label for="labelTotale"><b>Totale</b></label>
+                    <input type="text" id="totale" value="@ViewBag.Totale" readonly="readonly" style="font-weight: bold; text-align: right" />
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+</form>
+
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+    // rimozione proposta
+    function EliminaProposta(recid) {
+        $.post('@Url.Action("EliminaProposta")',
+        {
+            recid: recid
+        },
+        function (data, success, xhr) {
+            if (data.Successo) {
+                toastr.success(data.Messaggio);
+                $('#proposta_' + data.RecId).remove();
+                $('#imponibile').val(data.Imponibile);
+                $('#imposta').val(data.Imposta);
+                $('#trasporto').val(data.Trasporto);
+                $('#totale').val(data.Totale);
+            } else {
+                toastr.error(data.Messaggio);
+            }
+        }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+    }
+
+    // quando il dom e' pronto
+    $(document).ready(function () {
+        // toastr in altro a sx
+        toastr.options = { positionClass: 'toast-top-left' };
+
+        // datetime
+        $.datepicker.setDefaults($.datepicker.regional['it']);
+        $('#dateInizioRicorrenza').datepicker();
+
+        // doppio click su azienda
+        $('#selProduttore').dblclick(function () {
+            document.location.href = '@Url.Action("Listino")?codiceCliente=@ViewBag.CodiceCliente&produttore=' + $(this).val();
+        });
+
+        // trasporto gratuito
+        $('#chkTrasportoGratuito').click(function () {
+            $.post('@Url.Action("TotaliProposta")',
+            {
+                codiceCliente: $('#selCliente').val(),
+                trasportoGratuito: $('#chkTrasportoGratuito').prop('checked')
+            },
+            function (data, success, xhr) {
+                if (data.Successo) {
+                    $('#imponibile').val(data.Imponibile);
+                    $('#imposta').val(data.Imposta);
+                    $('#trasporto').val(data.Trasporto);
+                    $('#totale').val(data.Totale);
+
+                    $('#pdf').attr('href', '/Report/Print?stored=APP_SP_REPORT_ORDINE_PROPOSTA_CLIENTE&codiceazienda=@ViewBag.CodiceAzienda&codiceanagrafica=@ViewBag.CodiceAnagrafica&codicecliente=@ViewBag.CodiceCliente&trasportogratuito=' + $('#chkTrasportoGratuito').prop('checked'));
+                } else {
+                    toastr.error(data.Messaggio);
+                }
+            }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+        });
+
+        $('#btnListino').click(function () {
+            var val = $('#selProduttore').val();
+            if (val != null)
+            {
+                document.location.href = '@Url.Action("Listino")?codiceCliente=@ViewBag.CodiceCliente&produttore=' + val;
+            }
+        });
+
+        // offerta ricorrente
+        $('#chkRicorrente').change(function () {
+            $('#offertaRicorrente').toggle();
+        });
+
+        // invio offerta
+        $("#btnInviaOfferta").click(function (e) {
+            e.preventDefault();
+            $.post('@Url.Action("InviaOfferta")',
+        $('#formOfferta').serialize(),
+        function (data, success, xhr) {
+            if (data.Successo) {
+                toastr.success(data.Messaggio);
+                setTimeout(function () {
+                    document.location.href = '@Url.Action("Offerte")';
+                }, 1000);
+            } else {
+                toastr.error(data.Messaggio);
+            }
+        }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+            return false;
+        });
+
+    });
+
+    </script>
+}

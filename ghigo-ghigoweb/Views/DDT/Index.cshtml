@@ -1,0 +1,216 @@
+﻿@using GhigoWeb.Models
+@model ListaDDTViewModel
+@{
+    ViewBag.Title = "DDT";
+}
+<br />
+
+@if(!string.IsNullOrEmpty(Model.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@Model.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Index", "DDT", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+@if(ViewBag.DaFatturare) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per i soli ddt da fatturare &nbsp;
+        @Html.ActionLink("Togli filtro", "Index", "DDT", routeValues: null, htmlAttributes: new { @class = "btn small pink" })
+    </span>
+    </text>
+}
+
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+<ul class="tabs center">
+@if(Model.Conferimenti.Count>0) {
+    <li><a href="#tabDDTConf">DDT Conferimenti</a></li>
+}
+@if(Model.Vendite.Count>0) {
+    <li><a href="#tabDDTVendita">DDT Vendita</a></li>
+}
+@if(Model.FarmaciaGrossista.Count>0) {
+    <li><a href="#tabDDTFG">Farmacia &rarr; Deposito</a></li>
+}
+@if(Model.GrossistaFarmacia.Count>0) {
+    <li><a href="#tabDDTGF">Deposito &rarr; Farmacia</a></li>
+}
+</ul>
+
+@if(Model.Conferimenti.Count>0) {
+<div id="tabDDTConf" class="tab-content">
+    <table class="striped tight" id="tabellaDDTConf">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>DDT Vendita</th>
+                <th>Fattura</th>
+                <th>Destinazione</th>
+                <th>Stampato</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Conferimenti)
+            {
+                @Html.Partial("_DDTConfPartial", item);
+            }
+        </tbody>
+    </table>
+</div>
+}
+@if(Model.Vendite.Count>0) {
+<div id="tabDDTVendita" class="tab-content">
+    <table class="striped tight" id="tabellaDDTVendita">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>Fattura</th>
+                <th>Destinazione</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Vendite)
+            {
+                @Html.Partial("_DDVendPartial", item);
+            }
+        </tbody>
+    </table>
+</div>
+}
+@if(Model.FarmaciaGrossista.Count>0) {
+<div id="tabDDTFG" class="tab-content">
+    <table class="striped tight" id="tabellaDDTFG">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>Fattura</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.FarmaciaGrossista)
+            {
+                @Html.Partial("_DDTFGPartial", item);
+            }
+        </tbody>
+    </table>
+</div>
+}
+
+@if (Model.GrossistaFarmacia.Count > 0)
+{
+<div id="tabDDTGF" class="tab-content">
+    <table class="striped tight" id="tabellaDDTGF">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.GrossistaFarmacia)
+            {
+                @Html.Partial("_DDTGFPartial", item);
+            }
+        </tbody>
+    </table>
+</div>
+}
+
+<div class="hide">
+    <form id="formGeneraFattura" style="width: 240px" class="vertical">
+        <fieldset>
+            <legend>Genera Fattura</legend>
+            <input type="hidden" id="hidRecId" name="ddtrecid"/>
+            <label for="txtNumeroFattura">Num. Fattura</label>
+            <input type="text" id="txtNumeroFattura" name="NumeroFattura" style="width: 200px" />
+        </fieldset>
+        <button id="btnConfermaFattura" class="orange" style="float: right">Crea Fattura</button>
+    </form>
+</div>
+
+@if (!ViewBag.Tutti && !ViewBag.DaFatturare)
+{
+    <text>
+        @Html.ActionLink("Visualizza tutti i DDT", "Index", "DDT", routeValues: new { tutti = true }, htmlAttributes: new { @class = "btn small blue" })
+        @Html.ActionLink("Visualizza tutti i DDT da fatturare", "Index", "DDT", routeValues: new { da_fatturare = true }, htmlAttributes: new { @class = "btn small pink" })
+    </text>
+}
+
+
+@section scripts {
+
+@if (ViewBag.RecId != 0)
+{
+    <script type="text/javascript">
+        function Esporta() {
+            window.open("/Report/Print?stored=@ViewBag.Stampa&rec_id=@ViewBag.RecId", "_blank", "");
+        }
+
+        setTimeout(Esporta, 3000);
+    </script>
+}
+
+    <script type="text/javascript">
+
+        function CreaFattura(recid) {
+
+            $('#hidRecId').val(recid);
+            $('#txtNumeroFattura').val('');
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formGeneraFattura'
+            });
+
+            $('#txtNumeroFattura').focus().select();
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left', timeOut: 10000 };
+
+            // crea fattura
+            $("#btnConfermaFattura").click(function (e) {
+
+                $.post('@Url.Action("CreaFattura", "Conferimenti")',
+                    $('#formGeneraFattura').serialize(),
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+
+                            toastr.success(data.Messaggio);
+                            setTimeout(function () {
+                                document.location.href = '@Url.Action("Index")';
+                                        }, 1000);
+
+                                    } else {
+                                        toastr.error(data.Messaggio);
+                                    }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+                return false;
+
+            });
+
+        });
+
+    </script>
+}

@@ -1,0 +1,13 @@
+﻿@using GhigoWeb.Models
+
+@{
+    ViewBag.Title = "Pagamento effettuato";
+}
+<br />
+
+<h3>Pagamento effettuato con successo!</h3>
+
+Il pagamento ha avuto successo.
+<br /><br />
+
+@Html.ActionLink("Torna alle offerte", "Offerte", "Ordini", null, htmlAttributes: new { @class = "btn small blue" })

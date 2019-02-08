@@ -1,0 +1,156 @@
+﻿@using GridMvc.Html
+
+@{
+    ViewBag.Title = "Ordine " + ViewBag.NumeroOrdine;
+}
+
+<h3>
+    @ViewBag.Title
+
+    <button id="btnNuovoArticolo" class="pop green" style="width: 80px; float: right" onclick="ApriDialog()">Aggiungi</button>
+</h3>
+
+<div>
+    <form id="formOrdine" action="#" method="post">
+        @Html.Grid(Model as IEnumerable<OrdineFornitoreDepositoDettaglio>).Columns(columns =>
+{
+    columns.Add(foo => foo.CodiceArticolo).Titled("Codice").SetWidth(110).Sortable(false);
+    columns.Add(foo => foo.Descrizione).Titled("Articolo").Sortable(false).SortInitialDirection(GridMvc.Sorting.GridSortDirection.Ascending);
+    columns.Add(foo => foo.Quantita).Titled("Qta").Sortable(false).RenderValueAs(foo => string.Format("<input type=\"text\" id=\"txtQuantita_{2}\" name=\"txtQuantita_{2}\" codart=\"{0}\" value=\"{1}\" style=\"width: 80px\" class=\"right\" />", foo.CodiceArticolo, foo.Quantita, foo.RecId)).Encoded(false).Sanitized(false);
+    columns.Add(foo => foo.Netto).Titled("Prezzo").Sortable(false).RenderValueAs(foo => string.Format("<input type=\"text\" id=\"txtPrezzo_{2}\" name=\"txtPrezzo_{2}\" codart=\"{0}\" value=\"{1}\" style=\"width: 80px\" class=\"right\" />", foo.CodiceArticolo, foo.Netto, foo.RecId)).Encoded(false).Sanitized(false);
+    columns.Add(foo => foo.NoteFornitore).Titled("Riferimento").Sortable(false)
+        .RenderValueAs(foo =>
+        string.IsNullOrEmpty(foo.NumeroOfferta) ? "&nbsp;" :
+        string.Format("Ord. {0}, chiude {1}, consegna {2}, Note: <b>{3}</b>", foo.NumeroOrdine, foo.DataChiusura.ToGhigoShortDateString(), foo.DataConsegna.ToGhigoShortDateString(), foo.NoteFornitore)).Encoded(false).Sanitized(false);
+})
+        <input type="hidden" name="CodiceAzienda" value="@ViewBag.CodiceAzienda" />
+        <input type="hidden" name="CodiceDeposito" value="@ViewBag.CodiceDeposito" />
+
+        <button id="btnModificaOrdine" class="btn pop pink">Salva modifiche</button>
+        @Html.ActionLink("Torna all'elenco ordini", "Index", null, new { @class = "btn pop orange", style = "float: right" })
+    </form>
+</div>
+
+
+<div class="hide">
+    <form id="formLibero" style="width: 400px" class="vertical">
+        <fieldset>
+            <legend>Nuovo Articolo</legend>
+            <label for="txtArticolo">Articolo</label>
+            <input type="text" id="txtArticolo" name="txtArticolo" />
+            <label for="txtDescrizione">Descrizione</label>
+            <input type="text" id="txtDescrizione" readonly="readonly" />
+            <table>
+                <tr>
+                    <td>
+                        <label for="txtQuantita">Quantita</label>
+                        <input type="text" id="txtQuantita" name="txtQuantita" style="width: 80px" class="right" value="0" />
+                    </td>
+                    <td>
+                        <label for="txtPrezzo">Prezzo</label>
+                        <input type="text" id="txtPrezzo" name="txtPrezzo" style="width: 80px" class="right" value="0" />
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+        <input type="hidden" name="CodiceAzienda" value="@ViewBag.CodiceAzienda" />
+        <input type="hidden" name="CodiceDeposito" value="@ViewBag.CodiceDeposito" />
+        <input type="hidden" name="NumeroOrdine" value="@ViewBag.NumeroOrdine" />
+        <button id="btnInserisciLibero" class="orange" style="float: right">Inserisci Riga</button>
+    </form>
+</div>
+
+
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+    // richiamo dialog
+    function ApriDialog() {
+
+        $('#txtArticolo').val('');
+        $('#txtDescrizione').val('');
+        $('#txtQuantita').val(0);
+        $('#txtPrezzo').val(0);
+
+        $.fancybox({
+            overlayShow: true,
+            autoDimensions: true,
+            href: '#formLibero'
+        });
+
+        $('#txtArticolo').focus().select();
+    }
+
+    // quando il dom e' pronto
+    $(document).ready(function () {
+        // toastr in altro a sx
+        toastr.options = { positionClass: 'toast-top-left' };
+
+        // input solo numerici
+        $("input[id^='txtQuantita']").numeric({ decimal: false, negative: false });
+        $("input[id^='txtPrezzo']").numeric({ decimal: true, negative: false });
+
+        // form
+        $('#txtArticolo').keypress(function (e) {
+            if (e.keyCode == '13') {
+                e.preventDefault();
+                $("#txtQuantita").focus().select();
+            }
+        });
+
+        $('#txtArticolo').change(function (e) {
+            $.post('@Url.Action("OttieniDescrizioneArticolo", "DaTrasferire")',
+                    {
+                        articolo: $('#txtArticolo').val()
+                    },
+                    function (data, success, xhr) {
+                        $('#txtDescrizione').val(data.Descrizione);
+                        if (data.Trovato) $("#txtQuantita").focus().select();
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+        });
+
+        // invio modifiche
+        $("#btnModificaOrdine").click(function (e) {
+            e.preventDefault();
+            $.post('@Url.Action("SalvaDettaglioOrdine")',
+                $('#formOrdine').serialize(),
+                function (data, success, xhr) {
+                    if (data.Successo) {
+                        toastr.success(data.Messaggio);
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        toastr.error(data.Messaggio);
+                    }
+                }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+            return false;
+        });
+
+        // nuovo articolo
+        $("#btnInserisciLibero").click(function (e) {
+            e.preventDefault();
+            $.post('@Url.Action("NuovoArticolo")',
+                $('#formLibero').serialize(),
+                function (data, success, xhr) {
+                    if (data.Successo) {
+                        toastr.success(data.Messaggio);
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        toastr.error(data.Messaggio);
+                    }
+                }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+            return false;
+        });
+    });
+
+</script>
+}
+
+

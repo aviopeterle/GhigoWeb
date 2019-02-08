@@ -1,0 +1,48 @@
+﻿@using GhigoWeb.Models
+@model IDictionary<string, string>
+
+@{
+    ViewBag.Title = "Elenco categorie del listino " + ViewBag.Descrizione;
+    IDictionary<string, string> coloreCategoria = (IDictionary<string, string>)ViewBag.ColoreCategoria;
+}
+
+<h3>@ViewBag.Title</h3>
+    Tipo di categorizzazione:
+        <input type="radio" name="tipoCategoria" value="commerciale" @(ViewBag.TipoCategoria == "" || ViewBag.TipoCategoria == "commerciale" ? "checked" : string.Empty) /> Commerciale
+        <input type="radio" name="tipoCategoria" value="alfabetica" @(ViewBag.TipoCategoria == "alfabetica" ? "checked" : string.Empty) /> Alfabetica
+        <input type="radio" name="tipoCategoria" value="produttore" @(ViewBag.TipoCategoria == "produttore" ? "checked" : string.Empty) /> Produttore
+
+    @Html.ActionLink("Torna alla proposta", "Proposta", new { codiceCliente = ViewBag.CodiceCliente }, new { @class = "btn pop orange" })
+    <table class="striped tight" id="tabellaElencoCategorie">
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                string colore = coloreCategoria[item.Key];
+                <tr>
+                    <td style="background-color: @(string.IsNullOrEmpty(colore) ? "transparent" : colore)">@item.Value</td>
+                    <td>
+                        @Html.ActionLink("Apri categoria", "Listino", "Ordini"
+                         , routeValues: new { produttore = ViewBag.Produttore, codiceCliente = ViewBag.CodiceCliente, codiceCategoria = item.Key, tipoCategoria = ViewBag.TipoCategoria }
+                            , htmlAttributes: new { @class = "btn small blue" })
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+<script type="text/javascript">
+    $(function () {
+        $("input[name$='tipoCategoria']").click(function () {
+            var value = $(this).val();
+            var url = '@Url.Action("Listino")';
+            url = url + '?produttore=@ViewBag.Produttore&codiceCliente=@ViewBag.CodiceCliente&tipoCategoria=' + value;
+            window.location.assign(url);
+        });
+    });
+</script>

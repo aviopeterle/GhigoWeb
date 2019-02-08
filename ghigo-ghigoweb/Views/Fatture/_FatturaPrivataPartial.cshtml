@@ -1,0 +1,22 @@
+﻿<tr id="fatturaprivata_recid_@Model.RecId">
+    <td>@Model.NumeroDocumento</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataDocumento)</td>
+    <td>@Model.DestinazioneRagioneSociale</td>
+    <td class="right">@Model.TotaleDocumento.ToString("N")</td>
+    <td class="center">
+        <a id="btnPDF_recid_@Model.RecId" 
+            class="btn small pop blue" 
+            target="_blank"
+            href="/Report/Print?stored=APP_SP_REPORT_FATTURA_ACCOMPAGNATORIA_PRIVATA&rec_id=@Model.RecId">
+            Fattura
+        </a>
+
+        @Html.ActionLink("Tracciabilità", "FileTracciabilita_FatturaPrivata", "Fatture", 
+        routeValues: new { recid = Model.RecId }, 
+        htmlAttributes: new { @class = "btn small blue" })
+
+        @Html.ActionLink("Elimina", "EliminaFatturaPrivata", "Fatture",
+        routeValues: new { recid = Model.RecId }, htmlAttributes: new { @class = "btn small red", onclick = "return confirm('Vuoi davvero eliminare questa fattura?')" })
+    </td>
+</tr>
+

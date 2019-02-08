@@ -1,0 +1,53 @@
+﻿@using System.Xml
+
+@model XmlDocument
+
+@{
+    ViewBag.Title = "ReteVendita";
+    ViewBag.Rn = 1;
+}
+
+@helper DisplayNode(XmlElement xe, int parent)
+{
+    var now = ++ViewBag.Rn;
+
+    var agente = xe.Name == "agente";
+
+    <tr class="treegrid-@ViewBag.Rn treegrid-parent-@parent" style="background-color:@(agente ? "yellow" : "transparent")">
+        <td>[@(agente ? "A" : "C")] @xe.Attributes["Nome"].Value</td>
+        <td>@xe.Attributes["Fatturato"].Value</td>
+    </tr>
+
+    foreach (XmlElement xc in xe.ChildNodes)
+    {
+        @DisplayNode(xc, now)
+    }
+}
+
+<h2>Rete di vendita</h2>
+
+@if (Model.ChildNodes.Count == 0)
+{
+    <h3>Nessun dato disponibile</h3>
+}
+else
+{
+    <table class="tree" style="display: none">
+        <tr class="treegrid-1" id="root">
+            <td>Nominativo</td>
+            <td>Fatturato</td>
+        </tr>
+
+        @DisplayNode(Model.FirstChild as XmlElement, 1)
+    </table>
+
+    <script type="text/javascript">
+        $('.tree').treegrid({
+            initialState: 'collapsed'
+        });
+        $('#root').treegrid('expand');
+        $('.tree').show();
+    </script>
+}
+
+

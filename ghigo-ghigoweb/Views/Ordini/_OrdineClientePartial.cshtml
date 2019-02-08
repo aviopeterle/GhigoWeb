@@ -1,0 +1,25 @@
+﻿<tr id="ordine_recid_@Model.RecId">
+    <td>@Model.NumeroOrdine</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataOrdine)</td>
+    <td>@Model.NomeCliente</td>
+    <td>@Model.Importo.ToString("N")</td>
+    <td>@Model.Note</td>
+    <td class="center">
+            @Html.ActionLink("Dettaglio", "DettaglioOrdine", "Ordini",
+            routeValues: new 
+            { 
+                numeroordine = Model.NumeroOrdine, 
+                ReturnUrl = ViewContext.RouteData.Values["action"] as string ?? "Index" 
+            }, htmlAttributes: new { @class = "btn small blue" })
+            <a class="btn small pop blue" 
+                target="_blank"
+                href="/Report/Print?stored=APP_SP_REPORT_ORDINE_CLIENTE_WEB_PDF&rec_id=@Model.RecId">
+                Pdf
+            </a>
+            <a class="btn small pop blue" 
+                target="_blank"
+                href="/Report/Print?stored=APP_SP_REPORT_ORDINE_CLIENTE_WEB_XLS&rec_id=@Model.RecId&formato=XLS">
+                Excel
+            </a>
+    </td>
+</tr>

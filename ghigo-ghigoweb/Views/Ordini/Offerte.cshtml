@@ -1,0 +1,66 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<OffertaCliente>
+@{
+    ViewBag.Title = "Ordine Cliente";
+}
+<br />
+
+<h4>Estremi per il bonifico</h4>
+<pre>
+    Banca: @ViewBag.BonificoBanca
+    Iban: @ViewBag.BonificoIban
+</pre>
+
+@if (!string.IsNullOrEmpty(ViewBag.Cerca))
+{
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Offerte", "Ordini", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+
+                      <h3>
+                          Ordini da valutare
+                          <!--
+                          <a class="btn small pop blue"
+                             target="_blank"
+                             href="/Report/Print?stored=APP_SP_REPORT_OFFERTA_CLIENTE&rec_id=0&codiceanagrafica=@ViewBag.CodiceAnagrafica&codiceazienda=@ViewBag.CodiceAzienda&tipolista=1">
+                              Pdf
+                          </a>
+                          <a class="btn small pop blue"
+                             target="_blank"
+                             href="/Report/Print?stored=APP_SP_REPORT_OFFERTA_CLIENTE&rec_id=0&formato=XLS&codiceanagrafica=@ViewBag.CodiceAnagrafica&codiceazienda=@ViewBag.CodiceAzienda&tipolista=1">
+                              Excel
+                          </a>
+                          -->
+                      </h3>
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+    <table class="striped tight" id="tabellaOfferte">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>Consegna</th>
+                <th>Stato</th>
+                <th>Pagamento</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+@foreach (var item in Model) {
+    @Html.Partial("_OfferteClientePartial", item)
+}
+          </tbody>
+    </table>
+

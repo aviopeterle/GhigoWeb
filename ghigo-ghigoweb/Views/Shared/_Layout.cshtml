@@ -1,0 +1,143 @@
+﻿@{
+    var controller = ViewContext.RouteData.Values["controller"] as string ?? "Home";
+    var action = ViewContext.RouteData.Values["action"] as string ?? "Index";
+    var page = (controller + ":" + action).ToLower();
+}
+<!DOCTYPE html>
+<html lang="it">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta charset="utf-8" />
+        <title>@ViewBag.Title</title>
+        <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+        <meta name="viewport" content="width=device-width" />
+        @Styles.Render("~/Content/themes/base/css")
+        @Styles.Render("~/Content/css/kickstart-css")
+        @Styles.Render("~/Content/site-css")
+
+        @Scripts.Render("~/bundles/modernizr")
+        @Scripts.Render("~/bundles/jquery")
+        @Scripts.Render("~/bundles/jqueryval")
+        @Scripts.Render("~/bundles/jqueryui")
+        @Scripts.Render("~/bundles/kickstart")
+        @Scripts.Render("~/bundles/gridmvc")
+        @Scripts.Render("~/bundles/toastr")
+    </head>
+    <body>
+        <div id="wrap" class="clearfix">
+            <header id="header">
+                <p class="site-title">
+                    <table border="0" style="width: 100%">
+                        <tr>
+                        @if (Roles.IsUserInRole("Rivenditore"))
+                        {
+                            <td>
+                                @Html.ActionLink("Logo", "Index", "Home", null, new { @class = "logo" })
+                            </td>
+                            <td>
+                                <a href="http://www.cartasi.it/gtwpages/common/index.jsp?id=efRmUBMlym" target="_blank" class="cartasi">CartaSi</a>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>
+                                @Html.ActionLink("Logo", "Index", "Home", null, new { @class = "logo_solo" })
+                            </td>
+                        }
+                        </tr>
+                    </table>
+                </p>
+            </header>
+            @if(Request.IsAuthenticated) {
+                var messaggio_web = ViewBag.MessaggioWeb as string;
+                if(!string.IsNullOrEmpty(messaggio_web))
+                {
+                <!-- Warning -->
+                <div class="notice warning" style="white-space: pre-wrap"><i class="icon x-large" data-icon="!"></i>@messaggio_web</div>
+                }
+            <nav id="nav">
+                <ul id="menu" class="menu">
+                @if(Roles.IsUserInRole("Fornitore")) {
+                    <li @Html.Raw(page == "offerte:index" ? "class=\"current\"" : "")>@Html.ActionLink("Offerte", "Index", "Offerte")</li>
+                    <li @Html.Raw(page == "conferimenti:index" ? "class=\"current\"" : "")>@Html.ActionLink("Conferimenti", "Index", "Conferimenti")
+                        <ul>
+                            <li>@Html.ActionLink("In Attesa", "InAttesa", "Conferimenti")</li>
+                        </ul>
+                    </li>
+                    <li @Html.Raw(page == "ddt:index" ? "class=\"current\"" : "")>@Html.ActionLink("DDT", "Index", "DDT")
+                        <ul>
+                            <li>@Html.ActionLink("In Attesa", "ElencoProposte", "DaTrasferire")</li>
+                            <li>@Html.ActionLink("Controllo Articolo/Lotto", "ControlloArticoloLotto", "DDT")</li>
+                        </ul>
+                    </li>
+                    <li @Html.Raw(page == "fatture:index" ? "class=\"current\"" : "")>@Html.ActionLink("Fatture", "Index", "Fatture")</li>
+                    <li @Html.Raw(page == "deposito:index" || page.StartsWith("ordinifornitoredeposito") ? "class=\"current\"" : "")>
+                        @Html.ActionLink("Deposito", "Index", "Deposito")
+                        <ul>
+                            <li>@Html.ActionLink("Lotti Invendibili", "Index", "LottiInvendibili")</li>
+                            @if (Roles.IsUserInRole("GestioneOrdiniFornitoriDeposito"))
+                            {
+                                <li>@Html.ActionLink("Ordini fornitori per deposito", "Index", "OrdiniFornitoreDeposito")</li>
+                                <li>@Html.ActionLink("Tabellone", "Tabellone", "OrdiniFornitoreDeposito")</li>
+                                <li>@Html.ActionLink("Elenco carichi", "ElencoCarichi", "OrdiniFornitoreDeposito")</li>
+                            }
+                        </ul>
+                    </li>
+                }
+                @if (Roles.IsUserInRole("Cliente")) {
+                    <li @Html.Raw(page.StartsWith("ordini:") ? "class=\"current\"" : "")>
+                        @Html.ActionLink("Ordini", "Index", "Ordini", new { onclick = "javascript:return false;" })
+                        <ul>
+                            <li>@Html.ActionLink("Ordini aperti", "Index", "Ordini")</li>
+                            <li>@Html.ActionLink("Ordini chiusi", "OrdiniChiusi", "Ordini")</li>
+                            <li>@Html.ActionLink("Ordini da valutare", "Offerte", "Ordini")</li>
+                            @if (!Roles.IsUserInRole("Rivenditore"))
+                            {
+                                <li>@Html.ActionLink("Ordini rifiutati", "OfferteRifiutate", "Ordini")</li>
+                                if (!Roles.IsUserInRole("Agente"))
+                                {
+                                    <li>@Html.ActionLink("Ordini ricorrenti", "OfferteRicorrenti", "Ordini")</li>
+                                }
+                            }
+                            <!--<li>@Html.ActionLink("Proposta d'acquisto", "ElencoProposte", "Ordini")</li>-->
+                            @if (Roles.IsUserInRole("Agente"))
+                            {
+                                <li>@Html.ActionLink("Rete di vendita", "ReteVendita", "Ordini")</li>
+                            }
+                            </ul>
+                    </li>
+                }
+                @if (Roles.IsUserInRole("GestioneListino"))
+                {
+                    <li @Html.Raw(page.StartsWith("gestionelistino") ? "class=\"current\"" : "")>
+                        @Html.ActionLink("Gestione Listino", "Index", "GestioneListino")
+                        <ul>
+                            <li>@Html.ActionLink("Importa modifiche", "ImportaModificheStep3", "GestioneListino")</li>
+                            <li>@Html.ActionLink("Valuta modifiche", "ValutaModifiche", "GestioneListino")</li>
+                            <li>@Html.ActionLink("Come fare?", "ImportaModifiche", "GestioneListino")</li>
+                        </ul>
+                    </li>
+                }
+                    <li @Html.Raw(page == "account:manage" ? "class=\"current\"" : "")>@Html.ActionLink("Account", "Manage", "Account")</li>
+                </ul>
+                @Html.Partial("_LoginPartial")
+            </nav>
+            }
+            <div id="body">
+                @RenderSection("featured", required: false)
+                @RenderBody()
+            </div>
+            <footer id="footer">
+                <p>
+                    <b>GHIGO S.R.L.</b><br />
+                    Sede legale: Corso Italia 22 20122 Milano | P.IVA e C.F. 01420370056<br />
+                    Registro imprese di Milano, REA 2053574 | Capitale sociale € 50000,00 i.v.<br />
+                    Sede operativa: Via Industria 38 14015 San Damiano d'Asti (AT)<br />
+                    <a href="mailto://info@ghigoglobal.com">info@ghigoglobal.com</a>
+                </p>
+            </footer>
+        </div>
+        
+        @RenderSection("scripts", required: false)
+    </body>
+</html>

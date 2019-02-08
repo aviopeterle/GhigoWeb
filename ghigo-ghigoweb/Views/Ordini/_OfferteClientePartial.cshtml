@@ -1,0 +1,41 @@
+﻿@using GhigoWeb.Extensions
+@{
+    bool pagamentoAttivo = ViewBag.PagamentoAttivo == null ? false : (bool)ViewBag.PagamentoAttivo;
+}
+
+<tr id="offerta_recid_@Model.RecId">
+    <td>@Model.NumeroOfferta</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataOfferta)</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataConsegna)</td>
+    <td>@(Model.StatoOfferta == 2 ? ViewBag.DaValutareGhigo : (Model.StatoOfferta == 3 ? ViewBag.DaValutareCliente : Model.StatoOfferta))</td>
+    <td>
+        @if (pagamentoAttivo)
+        {
+            if (Model.PagamentoEffettuato)
+            {
+                <text>@Model.DatiPagamento</text>
+            }
+            else
+            {
+                <text>
+                    @Html.ActionImage("EffettuaPagamento", "Pagamento", new { document = "OFFERTA_CLIENTE." + Model.CodiceAzienda + "." + Model.NumeroOfferta, method = GhigoWeb.Controllers.PagamentoController.Method.PayPal }, "~/Images/paypal.jpg", "PayPal")
+                    &nbsp;
+                    <!--@Html.ActionImage("EffettuaPagamento", "Pagamento", new { document = "OFFERTA_CLIENTE." + Model.CodiceAzienda + "." + Model.NumeroOfferta, method = GhigoWeb.Controllers.PagamentoController.Method.GestPay }, "~/Images/creditcart.jpg", "GestPay")
+                    &nbsp;-->
+                    @Html.ActionImage("EffettuaPagamento", "Pagamento", new { document = "OFFERTA_CLIENTE." + Model.CodiceAzienda + "." + Model.NumeroOfferta, method = GhigoWeb.Controllers.PagamentoController.Method.CartaSi }, "~/Images/cartasi.png", "CartaSi")
+                </text>
+            }
+        }
+        else
+        {
+            <text>Non applicabile</text>
+        }
+    </td>
+    <td class="center">
+            <a class="btn small pop blue"
+               target="_blank"
+               href="/Report/Print?stored=APP_SP_REPORT_OFFERTA_CLIENTE&rec_id=@Model.RecId">
+                Pdf
+            </a>
+    </td>
+</tr>

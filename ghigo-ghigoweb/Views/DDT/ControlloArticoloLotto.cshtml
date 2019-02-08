@@ -1,0 +1,92 @@
+﻿@using GhigoWeb.Models
+@using GhigoWeb.Extensions
+
+@model IEnumerable<ControlloArticoloLotto>
+
+@{
+    ViewBag.Title = "Controllo Articolo Lotto";
+}
+
+<div class="left">
+    <form method="get" class="vertical">
+        <fieldset>
+            <legend>Parametri di ricerca</legend>
+            <table border="0">
+                <tr>
+                    <td>
+                        <label for="articolo">Articolo</label>
+                        <input class="small" id="articolo" name="articolo" type="text" placeholder="Articolo" style="width: 200px" value="@ViewBag.Articolo" />
+                    </td>
+                    <td>
+                        <label for="lotto">Lotto</label>
+                        <input class="small" id="lotto" name="lotto" type="text" placeholder="Lotto" style="width: 200px" value="@ViewBag.Lotto" />
+                    </td>
+                    <td>
+                        <input type="submit" value="Cerca" class="orange" />
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+    </form>
+</div>
+
+@if(Model == null || Model.Count() == 0) {
+    <h3>Nessun risultato disponibile (oppure nessun filtro settato!).</h3>
+}
+else
+{
+    <table class="striped" style="font-size: smaller">
+        <thead>
+            <tr>
+                <th>Cod. Articolo</th>
+                <th>Descrizione Articolo</th>
+                <th>Tipo DDT</th>
+                <th>Numero DDT</th>
+                <th>Data DDT</th>
+                <th>Lotto</th>
+                <th class="right">Quantita</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.CodiceArticolo</td>
+                    <td style="width: 200px">@item.DescrizioneArticolo</td>
+                    <td>@item.TipoDdt</td>
+                    <td>@item.NumeroDdt</td>
+                    <td>@DateTimeExt.ToGhigoShortDateString(item.DataDdT)</td>
+                    <td>@item.Lotto</td>
+                    <td class="right">@item.Quantita</td>
+                    <td>
+                        @if (item.TipoDdt == "TRFG")
+                        {
+                            <a class="btn small pop"
+                               target="_blank"
+                               href="/Report/Print?stored=APP_SP_REPORT_DDT_CONFERIMENTI_FORNITORI&rec_id=@item.RecIdDdt">
+                                DDT
+                            </a>
+                        }
+                        @if (item.TipoDdt == "TRDF")
+                        {
+                            <a class="btn small pop"
+                               target="_blank"
+                               href="/Report/Print?stored=APP_SP_REPORT_DDT_VENDITE_DEPOSITI&rec_id=@item.RecIdDdt">
+                                DDT
+                            </a>
+                        }       
+                        @if (item.TipoDdt == "TRRF")
+                        {
+                            <a class="btn small pop"
+                               target="_blank"
+                               href="/Report/Print?stored=APP_SP_REPORT_DDT_VENDITE_DEPOSITI&rec_id=@item.RecIdDdt">
+                                DDT
+                            </a>
+                        }                                           
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

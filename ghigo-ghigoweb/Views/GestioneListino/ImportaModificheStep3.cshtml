@@ -1,0 +1,137 @@
+﻿@{
+    ViewBag.Title = "ImportaModificheStep3";
+}
+
+<h2>Importa le modifiche al listino da excel (Passo 3)</h2>
+
+Prego scegliere il listino che si vuole modificare e premere <b>CTRL+V</b> per importare i dati. 
+<br />
+Seguirà immediatamente il processo di validazione: se non vi sono errori, sarà possibile continuare al prossimo passo.
+<br /><br />
+Listino: 
+
+@Html.DropDownList("codiceListino", (IEnumerable<SelectListItem>)ViewBag.Listini, new { style = "background-color: #3366FF; color: white; font-size: 18px", id = "codiceListino" })
+<br />
+<div id="divNomeListino" style="display: none">
+    Nome del nuovo listino: <br />
+    <input id="textNomeListino" type="text" style="width: 100%; height: 50px" />
+</div>
+<br />
+Note della modifica: <br />
+<textarea id="noteListino" style="width: 100%; height: 50px"></textarea>
+<br /><br />
+
+<table border="0">
+    <tr>
+        <th>Codice</th>
+        <th width="90%">Prodotto</th>
+        <th>Qta</th>
+        <th>P.Acquisto</th>
+        <th>P.Vendita</th>
+        <th>Ricarico</th>
+        <th>Gruppo</th>
+    </tr>
+    <tbody id="tableBody">
+
+    </tbody>
+</table>
+
+<table border="0">
+    <tr>
+        <td width="50%" style="text-align: left">@Html.ActionLink("Torna al passo precedente", "ImportaModificheStep2", null, new { @class = "btn pop orange" })</td>
+        <td width="50%" style="text-align: right"><button id="btnAvanti" class="btn pop blue" style="display: none">Concludi l'importazione</button></td>
+    </tr>
+</table>
+
+Dati importati, solo ad utilizzo diagnostico:
+<pre id="pasteDiv"></pre>
+
+@section scripts {
+
+    <script type="text/javascript">
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            document.body.onpaste = function (e) {
+                if ($('#noteListino').is(":focus"))
+                    return;
+
+                var text = e.clipboardData.getData('text/plain');
+                if (text) {
+                    $('#pasteDiv').text(text);
+                    
+                    // per sicurezza non permettiamo di andare avanti per default
+                    $('#btnAvanti').hide();
+
+                    $.post('@Url.Action("ControllaCsvModifiche", "GestioneListino")',
+                    {
+                        csv: text
+                    },
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            $('#tableBody').empty().html(data.Table);
+                            var codiceListino = $('#codiceListino').val();
+                            var nomeListino = $('#textNomeListino').val();
+
+                            if (data.Avanti && codiceListino) {
+                                // se è un nuovo listino, dobbiamo essere sicuri che sia valorizzato anche textbox
+                                if ((codiceListino == "[Nuovo]" && nomeListino == "")) {
+                                    // non va bene
+                                } else {
+                                    // tutto ok
+                                    $('#btnAvanti').show();
+                                }
+                            }
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+                }
+            };
+
+            // change del select
+            $('#codiceListino').change(function () {
+                // puliamo il csv
+                $('#pasteDiv').text('');
+                // puliamo la table
+                $('#tableBody').empty();
+                // puliamo le note
+                $('#noteListino').val('');
+                // per sicurezza non permettiamo di andare avanti per default
+                $('#btnAvanti').hide();
+                // nessun nome del listino
+                $('#textNomeListino').val('');
+                if ($('#codiceListino').val() == "[Nuovo]")
+                    $('#divNomeListino').show();
+                else
+                    $('#divNomeListino').hide();
+            });
+
+            // conclusione dell'importazione
+            $('#btnAvanti').click(function () {
+                var text = $('#pasteDiv').text();
+
+                $.post('@Url.Action("ConcludiImportazioneModifiche", "GestioneListino")',
+                {
+                  csv: text
+                , note: $('#noteListino').val()
+                , codiceListino: $('#codiceListino').val()
+                , nomeListino: $('#textNomeListino').val()
+                },
+                function (data, success, xhr) {
+                    if (data.Successo) {
+                        window.location = '@Url.Action("ImportaModificheCompletata")';
+                    } else {
+                        toastr.error(data.Messaggio);
+                    }
+                }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+            });
+        });
+    </script>
+
+}

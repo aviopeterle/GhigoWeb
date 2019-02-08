@@ -1,0 +1,15 @@
+﻿<tr id="fatturadeposito_recid_@Model.RecId">
+    <td>@Model.NumeroDocumento</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataDocumento)</td>
+    <td>@Model.DestinazioneRagioneSociale</td>
+    <td class="right">@Model.TotaleDocumento.ToString("N")</td>
+    <td class="center">
+        <a id="btnPDF_recid_@Model.RecId" 
+            class="btn small pop blue" 
+            target="_blank"
+            href="/Report/Print?stored=APP_SP_REPORT_FATTURA_DEPOSITO&rec_id=@Model.RecId">
+            Fattura
+        </a>
+    </td>
+</tr>
+

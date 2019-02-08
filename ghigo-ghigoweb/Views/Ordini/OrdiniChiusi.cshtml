@@ -1,0 +1,63 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<OrdineClienteChiuso>
+@{
+    ViewBag.Title = "Ordini Cliente";
+}
+<br />
+
+@if (!string.IsNullOrEmpty(ViewBag.Cerca))
+{
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "OrdiniChiusi", "Ordini", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+                      <h3>
+                          Ordini chiusi
+                          <a class="btn small pop blue"
+                             target="_blank"
+                             href="/Report/Print?stored=APP_SP_REPORT_ORDINE_CLIENTE_WEB_PDF&rec_id=0&codiceanagrafica=@ViewBag.CodiceAnagrafica&codiceazienda=@ViewBag.CodiceAzienda&tipolista=3">
+                              Pdf
+                          </a>
+                          <a class="btn small pop blue"
+                             target="_blank"
+                             href="/Report/Print?stored=APP_SP_REPORT_ORDINE_CLIENTE_WEB_XLS&rec_id=0&formato=XLS&codiceanagrafica=@ViewBag.CodiceAnagrafica&codiceazienda=@ViewBag.CodiceAzienda&tipolista=3">
+                              Excel
+                          </a>
+                      </h3>
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+    <table class="striped tight" id="tabellaOrdini">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Importo</th>
+                <th>Note</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+@foreach (var item in Model) {
+    @Html.Partial("_OrdineClientePartial", item)
+}
+          </tbody>
+    </table>
+
+@if (!ViewBag.Tutti)
+{
+    <text>
+        @Html.ActionLink("Visualizza tutti gli ordini chiusi", "OrdiniChiusi", "Ordini", routeValues: new { tutti = true }, htmlAttributes: new { @class = "btn small blue" })
+    </text>
+}

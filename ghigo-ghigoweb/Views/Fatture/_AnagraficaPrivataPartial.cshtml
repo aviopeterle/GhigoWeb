@@ -1,0 +1,12 @@
+﻿<tr id="anagraficaprivata_recid_@Model.RecId">
+    <td>@Model.RagioneSociale</td>
+    <td>@Model.Indirizzo</td>
+    <td>@Model.Citta</td>
+    <td>@Model.CodiceFiscale</td>
+    <td>@Model.PartitaIva</td>
+    <td>
+        @Html.ActionLink("Scegli", "NuovaFatturaPrivata_SceltaDestinazione", "Fatture", 
+            routeValues: new { ddt_recid = ViewBag.DdtRecId, ana_recid = Model.RecId, nota_accredito = ViewBag.NotaAccredito, numeroproposta = ViewBag.NumeroProposta }, 
+            htmlAttributes: new { @class = "btn small blue" })
+    </td>
+</tr>

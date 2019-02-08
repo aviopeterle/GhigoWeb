@@ -1,0 +1,26 @@
+﻿<tr id="deposito_recid_@Model.RecId">
+    <td>@Model.CodiceArticolo</td>
+    <td>@Model.Descrizione</td>
+    <td class="center">@Model.Lotto</td>
+    <td class="center">@DateTimeExt.ToGhigoShortDateString(Model.ScadenzaLotto)</td>
+    <td class="right" id="Quantita_recid_@Model.RecId">@Model.Quantita</td>
+    <td class="right" id="Prenotato_recid_@Model.RecId">@Model.Prenotato</td>
+    <td class="center">
+        <button id="btnDeposito_prenota_recid_@Model.RecId"
+            class="small pop @(Model.Quantita - Model.Prenotato <= 0 ? string.Empty : "green")" 
+            style="width: 80px"
+            onclick="Prenota(@Model.RecId)"
+            @(Model.Quantita - Model.Prenotato <= 0 ? "disabled=\"disabled\"" : string.Empty)>
+            Prenota
+        </button>
+    </td>
+    <td class="center">
+        <button id="btnDeposito_rimuovi_recid_@Model.RecId"
+            class="small pop @(Model.Prenotato == 0 ? string.Empty : "orange")" 
+            style="width: 80px"
+            onclick="Rimuovi(@Model.RecId)"
+            @(Model.Prenotato == 0 ? "disabled=\"disabled\"" : string.Empty)>
+            Rimuovi
+        </button>
+    </td>
+</tr>

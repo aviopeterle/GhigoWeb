@@ -1,0 +1,108 @@
+﻿@using GhigoWeb.Models
+
+@{
+    ViewBag.Title = "Elenco proposte (i primi 1000)";
+    var clientiConProposta = ViewBag.ClientiConProposta as AgenteClienti[];
+    var clientiSenzaProposta = ViewBag.ClientiSenzaProposta as AgenteClienti[];
+}
+<br />
+
+@if (!string.IsNullOrEmpty(ViewBag.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "ElencoProposte", "Ordini", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+<span style="float: left">
+    @Html.ActionLink("Nuovo cliente", "ModificaClientePotenziale", "Ordini", routeValues: new { cli_recid = 0 }, htmlAttributes: new { @class = "btn small pink" })
+</span>
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+<ul class="tabs center">
+@if (clientiConProposta.Length > 0) { 
+    <li><a href="#tabClientiConProposta">Clienti con proposta</a></li>
+}
+@if (clientiSenzaProposta.Length > 0) {
+    <li><a href="#tabClientiSenzaProposta">Clienti (primi 50)</a></li>
+}
+</ul>
+
+@if (clientiConProposta.Length > 0)
+{
+
+    <div id="tabClientiConProposta" class="tab-content">
+        <table class="striped tight" id="tabellaClientiConProposta">
+            <thead>
+                <tr>
+                    <th>Cod.Cliente</th>
+                    <th>Cod.Fiscale</th>
+                    <th>Partita Iva</th>
+                    <th>Cliente</th>
+                    <th>Comune</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in clientiConProposta)
+                {
+                    <tr>
+                        <td>@item.CodiceCliente</td>
+                        <td>@item.CodiceFiscale</td>
+                        <td>@item.PartitaIva</td>
+                        <td>@item.Cliente</td>
+                        <td>@item.ComuneCompleto</td>
+                        <td>
+                            @Html.ActionLink("Apri proposta", "Proposta", "Ordini", routeValues: new { codiceCliente = item.CodiceCliente }, htmlAttributes: new { @class = "btn small green" })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+}
+
+
+@if (clientiSenzaProposta.Length > 0) {
+
+    <div id="tabClientiSenzaProposta" class="tab-content">
+        <table class="striped tight" id="tabellaClientiSenzaProposta">
+            <thead>
+                <tr>
+                    <th>Cod.Cliente</th>
+                    <th>Cod.Fiscale</th>
+                    <th>Partita Iva</th>
+                    <th>Cliente</th>
+                    <th>Comune</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in clientiSenzaProposta)
+                {
+                    <tr>
+                        <td>@item.CodiceCliente</td>
+                        <td>@item.CodiceFiscale</td>
+                        <td>@item.PartitaIva</td>
+                        <td>@item.Cliente</td>
+                        <td>@item.ComuneCompleto</td>
+                        <td>
+                            @Html.ActionLink("Nuova proposta", "Proposta", "Ordini", routeValues: new { codiceCliente = item.CodiceCliente }, htmlAttributes: new { @class = "btn small orange" })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+}

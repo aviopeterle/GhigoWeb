@@ -1,0 +1,26 @@
+﻿<tr id="offertadettaglio_recid_@Model.RecId" 
+    @Html.Raw(Model.PrezzoConfermato != Model.PrezzoRichiesto || Model.QuantitaConfermata != Model.QuantitaRichiesta
+    ? ( Model.QuantitaConfermata == 0 ? "style=\"background-color: grey\"" : "style=\"background-color: yellow\"") : string.Empty)>
+    <td>@Model.Riga</td>
+    <td>@Model.CodiceArticolo</td>
+    <td>@Model.Descrizione</td>
+    <td class="center">@DateTimeExt.ToGhigoShortDateString(Model.ScadenzaLotto)</td>
+    <td class="right">@Model.PrezzoConfermato.ToString("N")</td>
+    <td class="right">@Convert.ToInt32(Model.QuantitaConfermata)</td>
+    <td class="right">
+        <input type="text" id="txtPrezzoRichiesto_recid_@Model.RecId" name="txtPrezzoRichiesto_recid_@Model.RecId" 
+            style="width: 80px" class="right" value="@Model.PrezzoRichiesto.ToString("N")" />
+    </td>
+    <td class="right">
+        <input type="text" id="txtQuantita_recid_@Model.RecId" name="txtQuantita_recid_@Model.RecId" 
+            @(Model.QuantitaConfermata == 0 ? "readonly" : string.Empty) 
+            style="width: 80px" class="right" value="@(Model.QuantitaConfermata == 0 ? 0 : Convert.ToInt32(Model.QuantitaRichiesta))" />
+    </td>
+    <td>
+        <button class="small pop red" 
+            onclick="event.preventDefault();EliminaQta(@Model.RecId)">
+            <span>Annulla</span>
+        </button>
+    </td>
+</tr>
+

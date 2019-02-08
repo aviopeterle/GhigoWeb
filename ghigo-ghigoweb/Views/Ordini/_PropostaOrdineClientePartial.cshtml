@@ -1,0 +1,24 @@
+﻿<tr id="proposta_@Model.RecId">
+    <td>@Model.CodiceArticolo</td>
+    <td>@Model.Descrizione</td>
+    <td class="center">@DateTimeExt.ToGhigoShortDateString(Model.ScadenzaLotto)</td>
+    <td class="right">@Model.Quantita</td>
+    <td class="right">@Model.Prezzo.ToString("N")</td>
+    <!--<td class="right">@Model.PrezzoProposto.ToString("N")</td>-->
+    <td class="center">
+        <button id="btnRimuoviProposta" 
+            class="small pop red" 
+            onclick="EliminaProposta(@Model.RecId)">
+            <span>Elimina</span>
+        </button>
+        <!--
+        @if (!string.IsNullOrEmpty(Model.CodiceListino))
+        {
+            @Html.ActionLink("Vai al listino", "Listino", "Ordini",
+                     routeValues: new { produttore = Model.CodiceListino, evidenzia_articolo = Model.CodiceArticolo, codiceCliente = ViewBag.CodiceCliente }, htmlAttributes: new { @class = "btn small green" })
+        }
+        -->
+    </td>
+</tr>
+
+

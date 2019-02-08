@@ -1,0 +1,13 @@
+﻿<tr id="offerta_recid_@Model.RecId">
+    <td>@Model.NumeroOfferta</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataOfferta)</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataConsegna)</td>
+    <td>@(Model.StatoOfferta == 6 ? ViewBag.RifiutoGhigo : (Model.StatoOfferta == 8 ? ViewBag.RifiutoCliente : Model.StatoOfferta))</td>
+    <td class="center">
+        <a class="btn small pop blue"
+           target="_blank"
+           href="/Report/Print?stored=APP_SP_REPORT_OFFERTA_CLIENTE&rec_id=@Model.RecId">
+            Pdf
+        </a>
+    </td>
+</tr>

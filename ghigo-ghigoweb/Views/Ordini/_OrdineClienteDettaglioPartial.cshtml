@@ -1,0 +1,10 @@
+﻿<tr id="ordinedettaglio_recid_@Model.RecId">
+    <td>@Model.CodiceArticolo</td>
+    <td>@Model.Descrizione</td>
+    <td class="center">@DateTimeExt.ToGhigoShortDateString(Model.DataScadenza)</td>
+    <td class="right">@Model.Netto.ToString("N")</td>
+    <td class="right">@Convert.ToInt32(Model.Quantita)</td>
+    <td class="right">@Model.QuantitaRaccolta</td>
+    <td class="right">@Convert.ToInt32(Model.QuantitaEvasa)</td>
+    <td class="right">@Convert.ToInt32(Model.QuantitaResidua)</td>
+</tr>

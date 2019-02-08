@@ -1,0 +1,13 @@
+﻿@using GhigoWeb.Models
+
+@{
+    ViewBag.Title = "Errore nel pagamento";
+}
+<br />
+
+<h3>Errore nel pagamento.</h3>
+
+E' avvenuto un errore nel pagamento, prego contattare GhigoGlobal per delucidazioni.
+<br /><br />
+
+@Html.ActionLink("Torna alle offerte", "Offerte", "Ordini", null, htmlAttributes: new { @class = "btn small blue" })

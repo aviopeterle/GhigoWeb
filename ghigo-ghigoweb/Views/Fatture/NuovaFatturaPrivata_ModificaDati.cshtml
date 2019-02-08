@@ -1,0 +1,111 @@
+﻿@using GhigoWeb.Models
+@using System.Reflection
+@using System.Collections.Generic
+
+@model FatturaPrivata
+@{
+    ViewBag.Title = "Modifica Dati";
+}
+
+@{
+    // cicliamo su tutte le proprietà del modello
+    string[] esclusioni = new string[] { "RecId", "CodiceAzienda", "CodiceFornitore", "TotaleDocumento" };
+    PropertyInfo[] pis = Model.GetType().GetProperties().Where(p => !esclusioni.Contains(p.Name)).ToArray();
+}
+
+<br />
+<h5>Modifica Dati Fattura</h5>
+
+<form id="formFattura" style="width: 800px" class="vertical">
+    <input type="hidden" name="ddt_recid" value="@ViewBag.DdtRecId" />
+    <input type="hidden" name="ana_recid" value="@ViewBag.AnaRecId" />
+    <input type="hidden" name="codiceazienda" value="@ViewBag.CodiceAzienda" />
+    <input type="hidden" name="codicefornitore" value="@ViewBag.CodiceFornitore" />
+    <input type="hidden" name="nota_accredito" value="@(ViewBag.NotaAccredito ? "1" : "0")" />
+    <input type="hidden" name="numeroproposta" value="@ViewBag.NumeroProposta" />
+    <fieldset>
+        @foreach (var pi in pis)
+        {
+            if (pi.PropertyType == typeof(string))
+            {
+            <label for="@("txt" + pi.Name)">@pi.Name</label>
+                if (ViewData.Keys.Contains(pi.Name))
+                {
+                    SelectList vd = ViewData[pi.Name] as SelectList;
+                    if (vd != null)
+                    {
+                        @Html.DropDownList(pi.Name, vd)
+                        continue;                      
+                    }
+                }
+            <input type="text" id="@("txt" + pi.Name)" name="@pi.Name" value="@pi.GetValue(Model)" />
+            }
+            else
+                if (pi.PropertyType == typeof(DateTime))
+                {
+                    DateTime dt = (DateTime)pi.GetValue(Model);
+            <label for="@("date" + pi.Name)">@pi.Name</label>
+            <input type="text" id="@("date" + pi.Name)" name="@pi.Name" value="@(dt.Year == 1 ? DateTime.Now.ToShortDateString() : dt.ToShortDateString())" />
+                }
+                else
+                    if (pi.PropertyType == typeof(int) || pi.PropertyType == typeof(long))
+                    {
+            <label for="@("int" + pi.Name)">@pi.Name</label>
+            <input type="text" id="@("int" + pi.Name)" name="@pi.Name" value="@pi.GetValue(Model)" style="width: 80px" class="right" />
+                    }
+                    else
+                        if (pi.PropertyType == typeof(decimal))
+                        {
+            <label for="@("dec" + pi.Name)">@pi.Name</label>
+            <input type="text" id="@("dec" + pi.Name)" name="@pi.Name" value="@pi.GetValue(Model)" style="width: 80px" class="right" />
+                        }
+                        else
+                            if (pi.PropertyType == typeof(bool))
+                            {
+            <input type="checkbox" id="@("chk" + pi.Name)" name="@pi.Name" value="@pi.GetValue(Model)" /> @pi.Name
+                            }
+                            else
+                            {
+                              @("Tipo non gestito " + pi.PropertyType.ToString())
+                            }
+        }
+    </fieldset>
+    <button id="btnCreaFatturaPrivata" class="orange">Crea Fattura/Nota di Accredito</button>
+</form>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left', timeOut: 10000 };
+
+            // numerici
+            $("input[id^='int']").numeric({ decimal: false, negative: false });
+            $("input[id^='dec']").numeric({ decimal: ',', negative: false });
+
+            // crea fattura
+            $("#btnCreaFatturaPrivata").click(function (e) {
+                e.preventDefault();
+                $.post('@Url.Action("NuovaFatturaPrivata_ModificaDati")',
+                    $('#formFattura').serialize(),
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                            setTimeout(function () {
+                                document.location.href = '@Url.Action("Index")';
+                            }, 1000);
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+                return false;
+            });
+        });
+
+    </script>
+}

@@ -1,0 +1,21 @@
+﻿<tr id="conferimento_recid_@Model.RecId">
+    <td>@Model.CodiceArticolo</td>
+    <td>@Model.Descrizione</td>
+    <td class="center">@Model.Lotto</td>
+    <td class="center">@DateTimeExt.ToGhigoShortDateString(Model.ScadenzaLotto)</td>
+    <td class="right">@Model.Quantita</td>
+    <td class="center">
+        <button id="btnConferimento_recid_@Model.RecId"
+            class="small pop @(@Model.Prenotato ? "orange" : "green")" 
+            style="width: 80px"
+            onclick="SpostaConferimento(@Model.RecId, @(@Model.Prenotato ? "0" : "1"))">
+            @(@Model.Prenotato ? "Rimuovi" : "Prenota")
+        </button>
+        <button id="btnRimuoviConferimento_recid_@Model.RecId"
+            class="small pop red" 
+            style="width: 80px"
+            onclick="RimuoviConferimento(@Model.RecId)">
+            Cancella
+        </button>
+    </td>
+</tr>

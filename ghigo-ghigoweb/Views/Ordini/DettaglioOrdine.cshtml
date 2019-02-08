@@ -1,0 +1,32 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<OrdineClienteDettaglio>
+@{
+    var prima_riga = Model.ElementAtOrDefault(0);
+    ViewBag.Title = string.Format("Ordine: {0}", prima_riga != null ? prima_riga.NumeroOrdine : string.Empty);
+}
+<br />
+
+<h3>@ViewBag.Title</h3>
+
+<table class="striped tight" id="tabellaOrdini">
+    <thead>
+        <tr>
+            <th>Codice</th>
+            <th>Descrizione</th>
+            <th class="center">Scadenza</th>
+            <th class="right">Prezzo</th>
+            <th class="right">Qta Ordinata</th>
+            <th class="right">Qta Raccolta</th>
+            <th class="right">Qta Evasa</th>
+            <th class="right">Qta Residua</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+@Html.Partial("_OrdineClienteDettaglioPartial", item)
+}
+        </tbody>
+</table>
+
+
+@Html.ActionLink("Torna all'elenco", Context.Request.QueryString["ReturnUrl"], "Ordini", routeValues: new {  }, htmlAttributes: new { @class = "btn small blue" })

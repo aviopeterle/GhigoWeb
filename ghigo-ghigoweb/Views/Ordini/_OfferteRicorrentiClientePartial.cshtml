@@ -1,0 +1,25 @@
+﻿<tr id="offerta_recid_@Model.RecId">
+    <td>@Model.NumeroOfferta</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataOfferta)</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataConsegna)</td>
+    <td>@(Model.StatoOfferta == 6 ? ViewBag.RifiutoGhigo : (Model.StatoOfferta == 8 ? ViewBag.RifiutoCliente : Model.StatoOfferta))</td>
+    <td><span id="spanRicorrenza_recid_@Model.RecId">@(Model.RicorrenzaAttiva ? "Si" : "No")</span></td>
+    <td>@Model.DescrizioneRicorrenza</td>
+    <td class="center">
+        <a class="btn small pop blue"
+           target="_blank"
+           href="/Report/Print?stored=APP_SP_REPORT_OFFERTA_CLIENTE&rec_id=@Model.RecId">
+            Pdf
+        </a>
+
+        <button id="btnAttiva_recid_@Model.RecId"
+                class="small pop @(Model.RicorrenzaAttiva ? "orange" : "green")"
+                style="width: 80px"
+                onclick="AttivaDisattiva(@Model.RecId)">
+            <span id="spanAttivaDisattiva_recid_@Model.RecId">@(Model.RicorrenzaAttiva ? "Disattiva" : "Attiva")</span>
+        </button>
+
+        @Html.ActionLink("Elimina", "AnnullaOffertaRicorrente", "Ordini",
+                     routeValues: new { recid = @Model.RecId }, htmlAttributes: new { @class = "btn small red", onclick="return confirm(\"Siete sicuri di voler eliminare l'offerta ricorrente?\");" })
+    </td>
+</tr>

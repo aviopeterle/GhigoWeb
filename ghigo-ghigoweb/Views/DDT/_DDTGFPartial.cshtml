@@ -1,0 +1,23 @@
+﻿<tr id="ddt_recid_@Model.RecId">
+    <td>@Model.NumeroDocumento</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataDDT)</td>
+    <td>
+        <a id="btnPDF_recid_@Model.RecId" 
+            class="btn small pop blue" 
+            target="_blank"
+            href="/Report/Print?stored=APP_SP_REPORT_DDT_VENDITE_DEPOSITI&rec_id=@Model.RecId&tipoddt=@Model.TipoDdt">
+            DDT
+        </a>
+        <a id="btnBarcode_recid_@Model.RecId" 
+            class="btn small pop blue" 
+            target="_blank"
+            href="/Report/Print?stored=APP_SP_REPORT_DDT_VENDITE_DEPOSITI_MODULOBARCODES&rec_id=@Model.RecId&tipoddt=@Model.TipoDdt">
+            Barcodes
+        </a>
+
+        @Html.ActionLink("Tracciabilità", "FileTracciabilita_DdtGrossistaFarmacia", "DDT",
+                routeValues: new { recid = Model.RecId },
+                htmlAttributes: new { @class = "btn small blue" })
+    </td>
+</tr>
+

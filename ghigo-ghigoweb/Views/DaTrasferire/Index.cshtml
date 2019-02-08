@@ -1,0 +1,227 @@
+﻿@model GhigoWeb.Models.PropostaTrasferimento[]
+@{
+    ViewBag.Title = "Da Trasferire";
+}
+<br />
+<h3>Proposta [@ViewBag.NumeroProposta - @ViewBag.DescrizioneProposta]</h3>
+
+    <button id="btnNuovoArticolo" class="pop green" style="width: 80px; float: right" onclick="ApriDialog()">Aggiungi</button>
+    <table class="striped tight" id="tabellaLiberi">
+        <thead>
+            <tr>
+                <th>Articolo</th>
+                <th style="width: 99%">Descrizione</th>
+                <th class="center">Lotto</th>
+                <th class="center">Scadenza</th>
+                <th class="right">Qta</th>
+                <th class="right">Costo</th>
+                <th class="right">Prezzo</th>
+                <th class="right">&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var item in Model) {
+                @Html.Partial("_LiberoPartial", item);
+            }
+        </tbody>
+    </table>
+<br />
+    @Html.ActionLink("Crea Nota di Accredito", "NuovaFatturaPrivata_SceltaAnagrafica", "Fatture",
+            routeValues: new { ddt_recid = 0, nota_accredito = true, numeroproposta = ViewBag.NumeroProposta }, 
+            htmlAttributes: new { @class = "btn pink" })
+    <button id="btnGeneraDDTLibero" class="orange" onclick="ApriDialogDDT()">Genera DDT Farmacia &rarr; Deposito</button>
+
+
+<div class="hide">
+    <form id="formLibero" style="width: 400px" class="vertical">
+        <fieldset>
+            <legend>Nuovo Articolo</legend>
+            <label for="txtArticolo">Articolo</label>
+            <input type="text" id="txtArticolo" />
+            <label for="txtDescrizione">Descrizione</label>
+            <input type="text" id="txtDescrizione" readonly="readonly" />
+            <label for="txtQuantita">Quantita</label>
+            <input type="text" id="txtQuantita" style="width: 80px" class="right"/>
+            <label for="txtLotto">Lotto</label>
+            <input type="text" id="txtLotto" />
+            <label for="txtCostoNettoUnitario">Costo Unitario</label>
+            <input type="text" id="txtCostoNettoUnitario" />
+            <label for="txtPrezzoVendita">Prezzo di Vendita</label>
+            <input type="text" id="txtPrezzoVendita" />
+            <label for="txtScadenzaLottoMese">Mese Scadenza</label>
+            <input type="text" id="txtScadenzaLottoMese" />
+            <label for="txtScadenzaLottoAnno">Anno Scadenza</label>
+            <input type="text" id="txtScadenzaLottoAnno" />
+        </fieldset>
+        <button id="btnInserisciLibero" class="orange" style="float: right">Inserisci Riga</button>
+    </form>
+</div>
+
+<div class="hide">
+    <form id="formGeneraDDT" style="width: 160px" class="vertical" method="post" action="@Url.Action("GeneraDDTLibero", "DDT")">
+        <fieldset>
+            <legend>Genera DDT</legend>
+            <label for="txtNumeroColli">Num. Colli</label>
+            <input type="text" id="txtNumeroColli" name="txtNumeroColli" style="width: 80px" class="right"/>
+@if(!ViewBag.DepositoInterno) {
+            <label for="txtNumeroDDT">Num. DDT</label>
+            <input type="text" id="txtNumeroDDT" name="txtNumeroDDT" style="width: 140px" />
+} else {
+            <input type="hidden" id="txtNumeroDDT" name="txtNumeroDDT" value="" />
+}
+            <input type="hidden" id="hidNumeroProposta" name="hidNumeroProposta" value="@ViewBag.NumeroProposta" />
+        </fieldset>
+        <input type="submit" id="btnConfermaDDT" class="orange" value="Conferma DDT"/>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+        // richiamo dialog
+        function ApriDialog() {
+
+            $('#txtArticolo').val('');
+            $('#txtDescrizione').val('');
+            $('#txtQuantita').val(0);
+            $('#txtCostoNettoUnitario').val(0);
+            $('#txtPrezzoVendita').val(0);
+            $('#txtLotto').val('');
+            $('#txtScadenzaLottoMese').val(0);
+            $('#txtScadenzaLottoAnno').val(0);
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formLibero'
+            });
+
+            $('#txtArticolo').focus().select();
+        }
+
+        // richiamo dialog
+        function ApriDialogDDT() {
+
+            $('#txtNumeroColli').val(0);
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formGeneraDDT'
+            });
+
+            $('#txtNumeroColli').focus().select();
+        }
+
+        // rimuovi libero
+        function RimuoviLibero(recid) {
+            $.post('@Url.Action("RimuoviLibero")',
+                    {
+                        recid: recid
+                    },
+                    function (data, success, xhr) {
+
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+
+                            $('#proposta_recid_' + recid).remove();
+
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            // input solo numerici
+            $("#txtScadenzaLottoAnno").numeric({ decimal: false, negative: false });
+            $("#txtScadenzaLottoMese").numeric({ decimal: false, negative: false });
+            $("#txtQuantita").numeric({ decimal: false, negative: false });
+            $("#txtCostoNettoUnitario").numeric({ decimal: ',', negative: false });
+            $("#txtPrezzoVendita").numeric({ decimal: ',', negative: false });
+            $('#txtNumeroColli').numeric({ decimal: false, negative: false });
+
+            $('#txtArticolo').keypress(function (e) {
+                if (e.keyCode == '13') {
+                    e.preventDefault();
+                    $("#txtQuantita").focus().select();
+                }
+            });
+
+            $('#txtArticolo').change(function (e) {
+                $.post('@Url.Action("OttieniDescrizioneArticolo")',
+                        {
+                            articolo: $('#txtArticolo').val()
+                        },
+                        function (data, success, xhr) {
+                            $('#txtDescrizione').val(data.Descrizione);
+                            if (data.Trovato) $("#txtQuantita").focus().select();
+                        }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+            });
+
+            $('#txtLotto').change(function (e) {
+                $.post('@Url.Action("OttieniDatiLotto")',
+                        {
+                            articolo: $('#txtArticolo').val(),
+                            lotto: $('#txtLotto').val()
+                        },
+                        function (data, success, xhr) {
+                            if (data.Successo) {
+                                $("#txtScadenzaLottoAnno").val(data.AnnoScadenza);
+                                $("#txtScadenzaLottoMese").val(data.MeseScadenza);
+                                $("#txtCostoNettoUnitario").val(data.Costo);
+                                $("#txtPrezzoVendita").val(data.Prezzo);
+                            }
+                        }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+            });
+
+            // invio riga
+            $("#btnInserisciLibero").click(function () {
+
+                $.fancybox.close();
+
+                var value = parseInt($('#txtQuantita').val());
+                if (isNaN(value)) {
+                    $(this).val(0);
+                    value = 0;
+                }
+
+                $.post('@Url.Action("InserisciLibero")',
+                    {
+                        articolo: $('#txtArticolo').val(),
+                        value: value,
+                        lotto: $('#txtLotto').val(),
+                        scadenzalottomese: $('#txtScadenzaLottoMese').val(),
+                        scadenzalottoanno: $('#txtScadenzaLottoAnno').val(),
+                        costo: $('#txtCostoNettoUnitario').val(),
+                        prezzo: $('#txtPrezzoVendita').val(),
+                        numeroproposta: $('#hidNumeroProposta').val()
+                    },
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                            $.post('@Url.Action("OttieniLibero")',
+                                {
+                                    recid: data.Recid
+                                },
+                                function (data, success, xhr) {
+                                    $('#tabellaLiberi').find("tbody").append(data);
+                                });
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+                return false;
+            });
+
+        });
+
+    </script>
+}

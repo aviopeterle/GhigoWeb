@@ -1,0 +1,56 @@
+﻿<tr id="ddt_recid_@Model.RecId">
+    <td>@Model.NumeroDocumento</td>
+    <td>@DateTimeExt.ToGhigoShortDateString(Model.DataDDT)</td>
+    @if (!string.IsNullOrEmpty(Model.NumeroDdtVendita))
+    {
+        <td>
+            @Html.ActionLink("TRDF" + (string)Model.NumeroDdtVendita, "Index", "DDT", routeValues: new { cerca = "TRDF" + Model.NumeroDdtVendita }, htmlAttributes: new { @class = "btn small green" })
+        </td>
+    } else {
+        <td>
+            &nbsp;
+        </td>
+    }
+    @if (!string.IsNullOrEmpty(Model.NumeroFattura))
+    {
+        <td>
+            @Html.ActionLink((string)Model.NumeroFattura, "Index", "Fatture", routeValues: new { cerca = Model.NumeroFattura }, htmlAttributes: new { @class = "btn small pink" })
+        </td>
+    } else {
+        <td>
+            @if(!ViewBag.DepositoInterno && string.IsNullOrEmpty(Model.NumeroDdtVendita)) {
+                <button id="btnCreaFattura_@Model.RecId"
+                    class="small pop orange" 
+                    onclick="CreaFattura(@Model.RecId)">
+                    Crea
+                </button>
+            }
+        </td>
+    }
+    <td>@Model.DestinazioneRagioneSociale</td>
+    <td>@(Model.Stampata ? "Si" : "No")</td>
+    <td>
+        <a id="btnPDF_recid_@Model.RecId" 
+            class="btn small pop @(Model.Stampata ? "blue" : "orange")" 
+            target="_blank"
+            href="/Report/Print?stored=APP_SP_REPORT_DDT_CONFERIMENTI_FORNITORI&rec_id=@Model.RecId">
+            DDT
+        </a>
+        <a id="btnBarcode_recid_@Model.RecId" 
+            class="btn small pop blue" 
+            target="_blank"
+            href="/Report/Print?stored=APP_SP_REPORT_DDT_CONFERIMENTI_FORNITORI_MODULOBARCODES&rec_id=@Model.RecId">
+            Barcodes
+        </a>
+        @if(Model.DifferenzeSpunta)
+        {
+        <a id="btnSpunta_recid_@Model.RecId"
+           class="btn small pop blue"
+           target="_blank"
+           href="/Report/Print?stored=APP_SP_REPORT_DDT_CONFERIMENTI_FORNITORI_SPUNTA&rec_id=@Model.RecId">
+            Diff.
+        </a>
+        }
+    </td>
+</tr>
+

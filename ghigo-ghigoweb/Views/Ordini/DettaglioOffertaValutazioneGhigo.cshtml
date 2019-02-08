@@ -1,0 +1,35 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<OffertaClienteDettaglio>
+@{
+    var prima_riga = Model.ElementAtOrDefault(0);
+    ViewBag.Title = string.Format("Ordine: {0}", prima_riga != null ? prima_riga.NumeroOfferta : string.Empty);
+}
+<br />
+
+<h3>@ViewBag.Title</h3>
+
+<table class="striped tight" id="tabellaOfferte">
+    <thead>
+        <tr>
+            <th>Riga</th>
+            <th>Codice</th>
+            <th>Descrizione</th>
+            <th class="center">Scadenza</th>
+            <th class="right">Prezzo Confermato</th>
+            <th class="right">Quantita Confermata</th>
+            <th class="right">Prezzo Richiesto</th>
+            <th class="right">Quantita Richiesta</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+@Html.Partial("_OffertaClienteDettaglioValutazioneGhigoPartial", item)
+}
+        </tbody>
+</table>
+
+
+@Html.ActionLink("Torna all'elenco", "Offerte", "Ordini", routeValues: new {  }, htmlAttributes: new { @class = "btn small blue" })
+
+@Html.ActionLink("Annulla l'ordine", "AnnullaOfferta", "Ordini", routeValues: new { recid = ViewBag.OffertaRecId }, htmlAttributes: new { @class = "btn small red", onclick = "return confirm('Vuoi davvero annullare questa offerta?')" })

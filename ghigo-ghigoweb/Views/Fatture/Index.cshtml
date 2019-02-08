@@ -1,0 +1,176 @@
+﻿@using GhigoWeb.Models
+
+@model FattureViewModel
+@{
+    ViewBag.Title = "Fatture";
+}
+<br />
+
+@if(!string.IsNullOrEmpty(Model.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@Model.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Index", "Fatture", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+<ul class="tabs center">
+@if(Model.FattureDeposito.Count>0) {
+    <li><a href="#tabFatDeposito">Fatture Deposito</a></li>
+}
+@if(Model.FatturePrivate.Count>0) {
+    <li><a href="#tabFatPrivate">Fatture Private</a></li>
+}
+@if(Model.FattureAccompagnatorieDeposito.Count>0) {
+    <li><a href="#tabFatAccDeposito">Fatture Acc. Deposito</a></li>
+}
+@if(Model.NoteAccreditoPrivate.Count>0) {
+    <li><a href="#tabNoteAccPrivate">Note Credito Private</a></li>
+}
+@if (Model.NoteAccreditoDeposito.Count > 0)
+{
+    <li><a href="#tabNoteAccDeposito">Note Credito Deposito</a></li>
+}
+</ul>
+
+@if (Model.FattureDeposito.Count > 0)
+{
+<div id="tabFatDeposito" class="tab-content">
+<table class="striped tight" id="tabellaFattureDeposito">
+    <thead>
+        <tr>
+            <th>Numero</th>
+            <th>Data</th>
+            <th>Destinazione</th>
+            <th class="right">Totale</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.FattureDeposito)
+        {
+            @Html.Partial("_FatturaDepositoPartial", item);
+        }
+    </tbody>
+</table>
+</div>
+}
+
+@if (Model.FatturePrivate.Count > 0)
+{
+<div id="tabFatPrivate" class="tab-content">
+<table class="striped tight" id="tabellaFatturePrivate">
+    <thead>
+        <tr>
+            <th>Numero</th>
+            <th>Data</th>
+            <th>Destinazione</th>
+            <th class="right">Totale</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.FatturePrivate)
+        {
+            @Html.Partial("_FatturaPrivataPartial", item);
+        }
+    </tbody>
+</table>
+</div>
+}
+
+@if (Model.FattureAccompagnatorieDeposito.Count > 0)
+{
+<div id="tabFatAccDeposito" class="tab-content">
+<table class="striped tight" id="tabellaFattureAccompagnatorieDeposito">
+    <thead>
+        <tr>
+            <th>Numero</th>
+            <th>Data</th>
+            <th>Destinazione</th>
+            <th class="right">Totale</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.FattureAccompagnatorieDeposito)
+        {
+            @Html.Partial("_FatturaAccDepositoPartial", item);
+        }
+    </tbody>
+</table>
+</div>
+}
+
+@if (Model.NoteAccreditoPrivate.Count > 0)
+{
+<div id="tabNoteAccPrivate" class="tab-content">
+<table class="striped tight" id="tabellaNoteAccPrivate">
+    <thead>
+        <tr>
+            <th>Numero</th>
+            <th>Data</th>
+            <th>Destinazione</th>
+            <th class="right">Totale</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.NoteAccreditoPrivate)
+        {
+            @Html.Partial("_NotaAccPrivataPartial", item);
+        }
+    </tbody>
+</table>
+</div>
+}
+
+@if (Model.NoteAccreditoDeposito.Count > 0)
+{
+    <div id="tabNoteAccDeposito" class="tab-content">
+        <table class="striped tight" id="tabellaNoteAccDeposito">
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>Data</th>
+                    <th>Destinazione</th>
+                    <th class="right">Totale</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.NoteAccreditoDeposito)
+                {
+                    @Html.Partial("_NotaAccDepositoPartial", item);
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if(!ViewBag.Tutti) {
+    <text>
+        @Html.ActionLink("Visualizza tutte le fatture", "Index", "Fatture", routeValues: new { tutti = true }, htmlAttributes: new { @class = "btn small blue" })
+    </text>
+}
+
+@if(ViewBag.RecId != 0) {
+    @section scripts {
+        <script type="text/javascript">
+            function Esporta() {
+                window.open("/Report/Print?stored=@ViewBag.Stampa&rec_id=@ViewBag.RecId", "_blank", "");
+            }
+
+            setTimeout(Esporta, 3000);
+        </script>
+    }
+}

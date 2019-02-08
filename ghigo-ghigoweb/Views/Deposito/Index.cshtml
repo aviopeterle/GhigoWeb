@@ -1,0 +1,188 @@
+﻿@using GhigoWeb.Models
+@{
+    ViewBag.Title = "Deposito";
+}
+<br />
+
+@if(!string.IsNullOrEmpty(ViewBag.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Index", "Deposito", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Articolo, parola, barcode" style="width: 200px"/>
+        <input type="checkbox" name="ordina_scadenza" value="true" onclick="this.form.submit();" @(ViewBag.OrdinatoScadenza ? "checked" : string.Empty) /> Ordina per scadenza
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+<button id="btnGeneraDDTDeposito" class="orange" style="float: right" onclick="ApriDialogDDT('/DDT/GeneraDDTDeposito')">Genera DDT</button>
+<table class="striped tight" id="tabellaDeposito">
+    <thead>
+        <tr>
+            <th>Articolo</th>
+            <th style="width: 99%">Descrizione</th>
+            <th class="center">Lotto</th>
+            <th class="center">Scadenza</th>
+            <th class="right">Qta</th>
+            <th class="right">Prenotato</th>
+            <th class="right">&nbsp;</th>
+            <th class="right">&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var item in (IEnumerable<SaldoDeposito>)Model) {
+            @Html.Partial("_DepositoPartial", item);
+        }
+    </tbody>
+</table>
+
+<div class="hide">
+    <form id="formGeneraDDT" style="width: 160px" class="vertical" method="post" action="action">
+        <fieldset>
+            <legend>Genera DDT</legend>
+            <label for="txtNumeroColli">Num. Colli</label>
+            <input type="text" id="txtNumeroColli" name="txtNumeroColli" style="width: 80px" class="right"/>
+@if(!ViewBag.DepositoInterno) {
+            <label for="txtNumeroDDT">Num. DDT</label>
+            <input type="text" id="txtNumeroDDT" name="txtNumeroDDT" style="width: 140px" />
+} else {
+            <input type="hidden" id="txtNumeroDDT" name="txtNumeroDDT" value="" />
+}
+        </fieldset>
+        <input type="submit" id="btnConfermaDDT" class="orange" style="float: right" value="Conferma DDT"/>
+    </form>
+</div>
+
+<div class="hide">
+    <form id="formQuantita" style="width: 160px" class="vertical">
+        <input type="hidden" id="hidDepositoRecid" name="hidDepositoRecid" />
+        <fieldset>
+            <legend>Prenota Qta</legend>
+            <label for="txtQuantita">Qta</label>
+            <input type="text" id="txtQuantita" name="txtQuantita" style="width: 80px" class="right"/>
+        </fieldset>
+        <button id="btnConfermaPrenotazione" class="orange" style="float: right" onclick="ConfermaPrenotazione()">Conferma Prenotazione</button>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+        // colli ddt
+        function ApriDialogDDT(url) {
+            $('#formGeneraDDT').attr('action', url);
+            $('#txtNumeroColli').val(0);
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formGeneraDDT'
+            });
+
+            $('#txtNumeroColli').focus().select();
+        }
+
+        // richiedi qta da prenotare
+        function Prenota(recid) {
+            $('#hidDepositoRecid').val(recid);
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formQuantita'
+            });
+
+            var qta = parseInt($('#Quantita_recid_' + recid).html());
+            var prenotato = parseInt($('#Prenotato_recid_' + recid).html());
+
+            $('#txtQuantita').val(qta - prenotato);
+            $('#txtQuantita').focus().select();
+        }
+
+        // conferma la qta da prenotare
+        function ConfermaPrenotazione() {
+            $.fancybox.close();
+
+            var recid = $('#hidDepositoRecid').val();
+            var qta = parseInt($('#txtQuantita').val());
+
+            $.post('@Url.Action("Prenota")',
+                {
+                    recid: recid,
+                    qta: qta
+                },
+                function (data, success, xhr) {
+                    if (data.Successo) {
+                        toastr.success(data.Messaggio);
+                        Aggiorna(data);
+                    } else {
+                        toastr.error(data.Messaggio);
+                    }
+                }, 'json').fail(function () {
+                    toastr.error("Errore nella comunicazione con il server.");
+            });
+        }
+
+        // rimuovi la prenotazione
+        function Rimuovi(recid) {
+
+            $.post('@Url.Action("Rimuovi")',
+                {
+                    recid: recid
+                },
+                function (data, success, xhr) {
+                    if (data.Successo) {
+                        toastr.success(data.Messaggio);
+                        Aggiorna(data);
+                    } else {
+                        toastr.error(data.Messaggio);
+                    }
+                }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+        }
+
+        function Aggiorna(data) {
+
+            $('#Quantita_recid_' + data.RecId).html(data.Quantita);
+            $('#Prenotato_recid_' + data.RecId).html(data.Prenotato);
+            
+            var btnPrenota = $('#btnDeposito_prenota_recid_' + data.RecId);
+            var btnRimuovi = $('#btnDeposito_rimuovi_recid_' + data.RecId);
+
+            if (data.Prenotato > 0) {
+                btnRimuovi.prop('disabled', false).addClass('orange');
+            } else {
+                btnRimuovi.prop('disabled', true).removeClass('orange');
+            }
+
+            if (data.Quantita - data.Prenotato > 0) {
+                btnPrenota.prop('disabled', false).addClass('green');
+            } else {
+                btnPrenota.prop('disabled', true).removeClass('green');
+            }
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            // evitiamo submit
+            $("#formQuantita").bind("submit", function (e) {
+                e.preventDefault();
+            });
+
+            // input solo numerici
+            $('#txtNumeroColli').numeric({ decimal: false, negative: false });
+            $('#txtQuantita').numeric({ decimal: false, negative: false });
+        });
+
+    </script>
+}

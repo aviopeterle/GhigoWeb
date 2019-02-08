@@ -1,0 +1,252 @@
+﻿@using GridMvc.Html
+
+@{
+    ViewBag.Title = "Listino";
+}
+
+<br />
+
+@if (!string.IsNullOrEmpty(ViewBag.Cerca) || !string.IsNullOrEmpty(ViewBag.Produttore))
+{
+    <text>
+    <span style="float: left">
+        <b>Listino @ViewBag.Descrizione</b> &nbsp;
+        @if(!string.IsNullOrEmpty(ViewBag.Cerca)) {
+        <text>
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Listino", "Ordini", routeValues: new { produttore = ViewBag.Produttore, codiceCliente = ViewBag.CodiceCliente, codiceCategoria = ViewBag.CodiceCategoria }, htmlAttributes: new { @class = "btn small blue" })
+        </text>
+        }
+    </span>
+    </text>
+}
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Articolo, parola, barcode" style="width: 200px" />
+        <input type="submit" value="Cerca" />
+        <input type="hidden" id="produttore" name="produttore" value="@ViewBag.Produttore" />
+        <input type="hidden" id="codiceCliente" name="codiceCliente" value="@ViewBag.CodiceCliente" />
+        <input type="hidden" id="codiceCategoria" name="codiceCategoria" value="@ViewBag.CodiceCategoria" />
+    </form>
+</div>
+
+<div id="hint" style="display: none; background-color: orange; border: 1px solid black; width: 100%">
+    @Html.Raw(ViewBag.Hint)
+</div>
+
+@Html.ActionLink("Torna alla proposta", "Proposta", new { codiceCliente = ViewBag.CodiceCliente }, new { @class = "btn pop orange" })
+@if (!string.IsNullOrEmpty(ViewBag.CodiceCategoria))
+{
+    @Html.ActionLink("Torna all'elenco categorie", "Listino", "Ordini", routeValues: new { produttore = ViewBag.Produttore, codiceCliente = ViewBag.CodiceCliente, codiceCategoria = string.Empty, tipoCategoria = ViewBag.TipoCategoria }, htmlAttributes: new { @class = "btn pop blue" })
+}
+
+<div>
+@Html.Grid(Model as IEnumerable<Listino>).Columns(columns =>
+{
+    columns.Add(foo => foo.CodiceArticolo).Titled("CodArt").SetWidth(110).Sortable(false);
+    columns.Add(foo => foo.Descrizione).Titled("Articolo").Sortable(false).SortInitialDirection(GridMvc.Sorting.GridSortDirection.Ascending);
+    columns.Add(foo => foo.Note).Titled("Note").SetWidth(110).Sortable(false);
+    columns.Add(foo => foo.PrezzoPubblico).Titled("P.Pubblico").Sortable(false);
+    columns.Add(foo => foo.ScontoLordo).Titled("Sc.Lordo").Sortable(false);
+    columns.Add(foo => foo.ScontoNetto).Titled("Sc.Netto").Sortable(false);
+    columns.Add(foo => foo.MinimoOrdinabile).Titled("Min.").Sortable(false);
+    columns.Add(foo => foo.InProposta).Titled("In proposta").Sortable(false).RenderValueAs(foo => string.Format("<input type=\"text\" id=\"txtQta_{0}\" codart=\"{0}\" value=\"{1}\" style=\"width: 80px\" />", foo.CodiceArticolo, foo.InProposta)).Encoded(false).Sanitized(false);
+    columns.Add(foo => foo.Prezzo).Titled("Listino").Sortable(false);
+    columns.Add(foo => foo.Disponibilita).Titled("Disp.").Sortable(false).RenderValueAs(foo => string.Format("<span>{0}</span>", foo.Disponibilita > 0 ? foo.Disponibilita.ToString() : "&nbsp;")).Encoded(false).Sanitized(false);
+    columns.Add(foo => foo.PrezzoProposto).Titled("-").Sortable(false).RenderValueAs(foo => string.Format("<input type=\"text\" id=\"txtPrezzo_{0}\" codart=\"{0}\" value=\"{1}\" style=\"width: 80px; display: none\" />", foo.CodiceArticolo, foo.PrezzoProposto)).Encoded(false).Sanitized(false);
+    columns.Add(foo => foo.GruppoProvvigione).Titled("").Sortable(false);
+})
+</div>
+
+<div class="hide">
+    <form id="formLibero" style="width: 200px" class="vertical">
+        <fieldset>
+            <legend>Distribuisci quantità</legend>
+            <input type="hidden" id="hidArticolo" name="hidArticolo" value="" />
+            <input type="hidden" id="hidPrezzo" name="hidPrezzo" value="" />
+            @foreach (DestinazioneCliente dc in (DestinazioneCliente[])ViewBag.Destinazioni)
+            {
+            <label for="qtaDest_@dc.CodiceDestinazione">@dc.NomeDestinazione</label>
+            <input type="text" id="qtaDest_@dc.CodiceDestinazione" name="qtaDest_@dc.CodiceDestinazione" class="right" />
+            }
+            <hr />
+            <label for="txtPezziTotali">Pezzi Totali</label>
+            <input type="text" id="txtPezziTotali" readonly="readonly" />
+        </fieldset>
+        <button id="btnConfermaDivisione" class="orange" style="float: right" onclick="return ConfermaDivisione();">Conferma</button>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+    function VisualizzaHint(hint) {
+        if (hint) {
+            var html = hint;
+            var matches = html.match(/#.*?#/g);
+            if (matches) {
+                $.each(matches, function (i, e) {
+                    html = html.replace(e, '<button class="small pink" onclick="EvidenziaGruppo(\'' + e + '\')">Evidenzia gruppo</button>');
+                });
+            }
+            $('#hint').html(html).show();
+        } else {
+            $('#hint').hide();
+        }
+    }
+
+    function EvidenziaGruppo(codici) {
+        $('tr.grid-row-selected').removeClass('grid-row-selected');
+        codici = codici.replace(/#/g, '').split(',');
+        $.each(codici, function (i, e) {
+            $('td:contains("' + e + '")').parent().addClass('grid-row-selected');
+        });
+    }
+
+    function ConfermaDivisione() {
+        $.fancybox.close();
+
+        var codart = $('#hidArticolo').val();
+        var prezzo = $('#hidPrezzo').val();
+        var qtaTotale = $('#txtPezziTotali').val();
+
+        $("input[id^='qtaDest_']").keyup(function (e) {
+            if(isNaN(parseInt($(this).val())))
+                $(this).val(0);
+        });
+
+        var divisione = $("input[id^='qtaDest_']").serialize();
+
+        SalvaQta(codart, qtaTotale, prezzo, divisione);
+
+        return false;
+    }
+
+    function DividiQta(codart, qta, prezzo) {
+
+        $('#hidArticolo').val(codart);
+        $('#hidPrezzo').val(prezzo);
+        $("input[id^='qtaDest_']").val(0);
+        $('#txtPezziTotali').val(0);
+
+        $.post('@Url.Action("LeggiDivisioneQta")',
+        {
+            codart: codart,
+            qta: qta,
+            codiceProduttore: '@ViewBag.Produttore',
+            codiceCliente: '@ViewBag.CodiceCliente'
+        },
+        function (data, success, xhr) {
+            if (data.Successo) {
+
+                for (var key in data.Divisione)
+                {
+                    $('#qtaDest_' + key).val(data.Divisione[key]);
+                }
+                RicalcolaTotaleDivisione();
+
+                $.fancybox({
+                    overlayShow: true,
+                    autoDimensions: true,
+                    href: '#formLibero'
+                });
+
+                $("input[id^='qtaDest_']:first").focus().select();
+            } else {
+                toastr.error(data.Messaggio);
+            }
+        }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+    }
+
+    function RicalcolaTotaleDivisione() {
+        var totale = 0;
+        $("input[id^='qtaDest_']").each(function () {
+            var numero = parseInt($(this).val());
+            totale += isNaN(numero) ? 0 : numero;
+        });
+        $('#txtPezziTotali').val(totale);
+    }
+
+    function SalvaQta(codart, qta, prezzo, divisione) {
+        $.post('@Url.Action("SalvaQta")',
+        {
+            codart: codart,
+            qta: qta,
+            prezzo: prezzo,
+            divisione: divisione,
+            codiceCliente: '@ViewBag.CodiceCliente',
+            codiceProduttore: '@ViewBag.Produttore'
+        },
+        function (data, success, xhr) {
+            if (data.Successo) {
+                toastr.success(data.Messaggio);
+                $('#txtQta_' + data.CodiceArticolo).val(data.Quantita);
+                VisualizzaHint(data.Hint);
+                return true;
+            } else {
+                toastr.error(data.Messaggio);
+                $('#txtQta_' + data.CodiceArticolo).val(data.Quantita);
+                return false;
+            }
+        }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+    }
+
+    // quando il dom e' pronto
+    $(document).ready(function () {
+        // toastr in altro a sx
+        toastr.options = { positionClass: 'toast-top-left' };
+
+        // input solo numerici
+        $("input[id^='txtQta_']").numeric({ decimal: false, negative: false });
+        $("input[id^='txtPrezzo_']").numeric({ decimal: true, negative: false });
+        $("input[id^='qtaDest_']").numeric({ decimal: false, negative: false });
+
+        // sul change
+        $("input[id^=txtQta_],input[id^=txtPrezzo_]").keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger("change");
+            }
+        });
+
+        $("input[id^='qtaDest_']").keyup(function (e) {
+            RicalcolaTotaleDivisione();
+        });
+
+        $("input[id^=txtQta_],input[id^=txtPrezzo_]").change(function () {
+            var codart = $(this).attr('codart');
+            var qta = $('#txtQta_' + codart).val();
+            var prezzo = $('#txtPrezzo_' + codart).val();
+
+            @if (ViewBag.DividiQta)
+                {
+                    <text>DividiQta(codart, qta, prezzo);</text>
+                }
+                else
+                {
+                    <text>SalvaQta(codart, qta, prezzo, '');</text>
+                }
+        });
+
+        @if(!string.IsNullOrEmpty(ViewBag.EvidenziaArticolo))
+            {
+                <text>
+        $('td:contains("@ViewBag.EvidenziaArticolo")').parent().addClass('grid-row-selected');
+        </text>
+            }
+
+        VisualizzaHint($('#hint').html().trim());
+    });
+
+</script>
+}
+
+<br />
+    @Html.ActionLink("Torna alla proposta", "Proposta", new { codiceCliente = ViewBag.CodiceCliente }, new { @class = "btn pop orange" })
+@if (!string.IsNullOrEmpty(ViewBag.CodiceCategoria))
+{
+    @Html.ActionLink("Torna all'elenco categorie", "Listino", "Ordini", routeValues: new { produttore = ViewBag.Produttore, codiceCliente = ViewBag.CodiceCliente, codiceCategoria = string.Empty, tipoCategoria = ViewBag.TipoCategoria }, htmlAttributes: new { @class = "btn pop blue" })
+}

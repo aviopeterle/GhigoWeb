@@ -1,0 +1,50 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<AnagraficaPrivata>
+@{
+    ViewBag.Title = "Scelta Anagrafica";
+}
+<br />
+<h5>Chi vuoi fatturare?</h5>
+
+@if(!string.IsNullOrEmpty(ViewBag.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "NuovaFatturaPrivata_SceltaAnagrafica", "Fatture", 
+            routeValues: new {  ddt_recid = ViewBag.DdtRecId, nota_accredito = ViewBag.NotaAccredito, numeroproposta = ViewBag.NumeroProposta }, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+        <input type="hidden" name="ddt_recid" value="@ViewBag.DdtRecId" />
+        <input type="hidden" name="numeroproposta" value="@ViewBag.NumeroProposta" />
+        <input type="hidden" name="nota_accredito" value="@ViewBag.NotaAccredito" />
+    </form>
+</div>
+
+@Html.ActionLink("Crea nuova", "NuovaFatturaPrivata_ModificaDati", "Fatture", 
+            routeValues: new {  ddt_recid = ViewBag.DdtRecId, ana_recid = 0, nota_accredito = ViewBag.NotaAccredito, numeroproposta = ViewBag.NumeroProposta }, 
+            htmlAttributes: new { @class = "btn orange", style="float: right" })
+<table class="striped tight" id="tabellaAnagrafiche">
+    <thead>
+        <tr>
+            <th>RagioneSociale</th>
+            <th>Indirizzo</th>
+            <th>Città</th>
+            <th>CodiceFiscale</th>
+            <th>PartitaIva</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            @Html.Partial("_AnagraficaPrivataPartial", item);
+        }
+    </tbody>
+</table>

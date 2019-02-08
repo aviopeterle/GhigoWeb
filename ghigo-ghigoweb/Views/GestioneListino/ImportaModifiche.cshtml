@@ -1,0 +1,78 @@
+﻿@{
+    ViewBag.Title = "ImportaModifiche";
+}
+
+<h2>Importa le modifiche al listino da excel</h2>
+
+Per l'importazione delle modifiche è necessario avere un foglio di excel con le seguenti colonne:
+<table border="0">
+    <tr>
+        <th>Colonna</th>
+        <th>Nome colonna</th>
+        <th>Note</th>
+    </tr>
+    <tr>
+        <td>A</td>
+        <td>CODICE</td>
+        <td>E' il codice dell'articolo per cui cambiare il listino, es. 930125784, 930871088, <b>necessariamente un codice valido per FarmaDati</b></td>
+    </tr>
+    <tr>
+        <td>B</td>
+        <td>PRODOTTO</td>
+        <td>E' la descrizione dell'articolo. <b>La colonna viene ignorata e viene utilizzata la descrizione fornita da FarmaDati</b></td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>QUANTITA'</td>
+        <td>E' la quantità minima di acquisto. <b>Vengono esclusi tutti i caratteri non numerici.</b></td>
+    </tr>
+    <tr>
+        <td>D</td>
+        <td>P.ACQUISTO</td>
+        <td>Il prezzo di acquisto. <b>Deve essere un numero decimale valido</b></td>
+    </tr>
+    <tr>
+        <td>E</td>
+        <td>P.VENDITA</td>
+        <td>Il prezzo di vendita. <b>Deve essere un numero decimale valido</b></td>
+    </tr>
+    <tr>
+        <td>F</td>
+        <td>&nbsp;</td>
+        <td>Colonna ignorata</td>
+    </tr>
+    <tr>
+        <td>G</td>
+        <td>RICARICO</td>
+        <td>Il ricarico applicato. <b>Deve essere un numero intero valido</b></td>
+    </tr>
+    <tr>
+        <td>H</td>
+        <td>&nbsp;</td>
+        <td>Colonna ignorata</td>
+    </tr>
+    <tr>
+        <td>I</td>
+        <td>GRUPPO ASS</td>
+        <td>Eventuale codice del gruppo di articoli assortiti. <b>Deve essere un codice articolo valido</b></td>
+    </tr>
+</table>
+
+Note:
+<ul>
+    <li>Il nome delle colonne deve comparire alla riga 1.</li>
+    <li>Dalla riga 2 iniziano le eventuali modifiche.</li>
+    <li>Sono ammesse eventuali righe vuote che verranno interamente ignorate.</li>
+</ul>
+ 
+Sotto un esempio di foglio excel valido per l'importazione:
+<br /><br />
+
+<img src="~/Images/Esempio file Excel Importazione Modifiche Formato.PNG" />
+
+<table border="0">
+    <tr>
+        <td width="50%" style="text-align: left">&nbsp;</td>
+        <td width="50%" style="text-align: right">@Html.ActionLink("Vai al passo successivo", "ImportaModificheStep2", null, new { @class = "btn pop blue" })</td>
+    </tr>
+</table>

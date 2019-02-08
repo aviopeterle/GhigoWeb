@@ -1,0 +1,56 @@
+﻿@model IEnumerable<PropostaTrasferimentoTestata>
+@{
+    ViewBag.Title = "ElencoProposte";
+}
+
+<h2>Proposte di trasferimento disponibili</h2>
+
+<table class="striped tight" id="tabellaProposte">
+    <thead>
+        <tr>
+            <th class="center">Data</th>
+            <th style="width: 90%">Descrizione</th>
+            <th class="right">&nbsp;</th>
+            <th class="right">&nbsp;</th>
+        </tr>
+    </thead>
+<tbody>
+        @if (Model.Count() == 0)
+        {
+        <tr>
+            <td colspan="3">
+                Nessuna proposta attiva</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model)
+            {
+        <tr id="proposta_recid_@item.RecId">
+            <td>@item.UltimaModifica.ToShortDateString()</td>
+            <td>@item.Descrizione</td>
+            <td class="center">
+                @Html.ActionLink("Vai alla proposta", "Index",
+                new { numeroproposta = @item.RecId },
+                new { @class = "btn small pop green", style = "width: 80px" })
+            </td>
+            <td class="center">
+                @Html.ActionLink("Elimina", "EliminaProposta",
+                new { recid = @item.RecId },
+                new { @class = "btn small pop red", style = "width: 80px", onclick = "return confirm('Sei sicuro di voler cancellare la proposta di trasferimento?');" })
+            </td>
+        </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@using (Html.BeginForm("CreaProposta", "DaTrasferire", FormMethod.Post, new { @class = "vertical", style = "width: 910px" }))
+{
+    <fieldset>
+        <legend>Nuova proposta</legend>
+        <label for="txtDescrizione">Descrizione</label>
+        <input type="text" id="txtDescrizione" name="txtDescrizione" />
+    </fieldset>
+    <input type="submit" class="orange" value="Crea proposta"/>
+}
+

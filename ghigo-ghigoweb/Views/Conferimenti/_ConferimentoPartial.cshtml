@@ -1,0 +1,17 @@
+﻿<tr id="offerta_recid_@Model.RecId">
+    <td id="CodiceArticolo_recid_@Model.RecId">@Model.CodiceArticolo</td>
+    <td id="Articolo_recid_@Model.RecId">@Model.Descrizione</td>
+    <td>@Model.PrezzoFornitore.ToString("N")</td>
+    <td>@(Model.PercentualeRicaricoFornitore)%</td>
+    <td id="DataScadenza_recid_@Model.RecId" class="center">@DateTimeExt.ToGhigoShortDateString(Model.DataScadenza)</td>
+    <td class="right" id="QuantitaConfermata_recid_@Model.RecId">@Model.QuantitaConfermata</td>
+    <td class="right" id="QuantitaConferita_recid_@Model.RecId">@Model.QuantitaConferita</td>
+    <td class="center">
+        <button id="btnQuantitaDaConferire_recid_@Model.RecId" 
+            class="small pop @(Model.QuantitaConferita >= Model.QuantitaConfermata ? string.Empty : "green")" 
+            style="width: 80px" @(Model.QuantitaConferita >= Model.QuantitaConfermata ? "disabled=\"disabled\"" : string.Empty)
+            onclick="ApriDialog(@Model.RecId)">
+            <span id="QuantitaDaConferire_recid_@Model.RecId">@Model.QuantitaDaConferire</span>
+        </button>
+    </td>
+</tr>

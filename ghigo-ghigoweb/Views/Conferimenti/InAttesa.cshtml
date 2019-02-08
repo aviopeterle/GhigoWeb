@@ -1,0 +1,189 @@
+﻿@model Dictionary<string, IList<GhigoWeb.Models.Conferimento>>
+@{
+    ViewBag.Title = "Da Trasferire";
+}
+<br />
+
+@if(!string.IsNullOrEmpty(ViewBag.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "InAttesa", "Conferimenti", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+
+
+@if(Model.Count>0) {
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Articolo, parola, barcode" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+<div id="accordion" class="hide">
+@foreach (var numero_ordine in Model.Keys)
+{
+    var prima_riga = Model[numero_ordine][0];
+    <h3 class="left">
+        Ord. @numero_ordine, chiude @prima_riga.DataChiusura.ToGhigoShortDateString(), consegna @prima_riga.DataConsegna.ToGhigoShortDateString()
+        @if (!string.IsNullOrEmpty(prima_riga.NoteFornitore))
+        {
+            var len = prima_riga.NoteFornitore.Length;
+            len = len > 40 ? 40 : len;
+            <u>&nbsp; @prima_riga.NoteFornitore.Substring(0, len) &nbsp;</u>
+        }        
+        @if(!string.IsNullOrEmpty(prima_riga.DescrizioneDepositoWeb))
+        {
+        <span style="font-size: smaller; color: red; float: right">&nbsp; @prima_riga.DescrizioneDepositoWeb &nbsp;</span>
+        }
+    </h3>
+    <div>
+    <table class="striped tight" id="tabellaOrdine_@numero_ordine" style="font-size: smaller">
+        <thead>
+            <tr>
+                <th>Articolo</th>
+                <th style="width: 60%">Descrizione</th>
+                <th class="center">Lotto</th>
+                <th class="center">Scadenza</th>
+                <th class="right">Qta</th>
+                <th class="right" style="width: 40%">&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model[numero_ordine])
+            {
+                @Html.Partial("_DaTrasferirePartial", item);
+            }
+        </tbody>
+    </table>
+    </div>
+}
+</div>
+    <br />
+<button id="btnGeneraDDTConferimento" class="orange" onclick="ApriDialogDDT()">Genera DDT</button>
+
+}
+else 
+{
+    <br /><span>Nessun conferimento disponibile</span>
+}
+
+<div class="hide">
+    <form id="formGeneraDDT" style="width: 300px" class="vertical" method="post" action="@Url.Action("GeneraDDTConferimento", "DDT")">
+        <fieldset>
+            <legend>Genera DDT</legend>
+            <label for="txtNumeroColli">Num. Colli</label>
+            <input type="text" id="txtNumeroColli" name="txtNumeroColli" style="width: 80px" class="right"/>
+@if (!ViewBag.DepositoInterno)
+{
+            <label for="txtNumeroDDT">Num. DDT</label>
+            <input type="text" id="txtNumeroDDT" name="txtNumeroDDT" style="width: 140px" />
+}
+else
+{
+            <input type="hidden" id="txtNumeroDDT" name="txtNumeroDDT" value="" />
+}
+            <label for="selCodiceDeposito">Deposito</label>
+            @Html.DropDownList("selCodiceDeposito", ViewBag.Depositi as IEnumerable<SelectListItem>)
+            <label for="txtNote">Note</label>
+            <textarea id="txtNote" name="txtNote" style="width: 200px"></textarea>
+        </fieldset>
+        <input type="submit" id="btnConfermaDDT" class="orange" style="float: right" value="Conferma DDT"/>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+        // richiamo dialog
+        function ApriDialogDDT() {
+
+            $('#txtNumeroColli').val(0);
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formGeneraDDT'
+            });
+
+            $('#txtNumeroColli').focus().select();
+        }
+
+        // sposta tra disponibile (0) e prenotato (1)
+        function SpostaConferimento(recid, dove) {
+
+            $.post('@Url.Action("Sposta", "DaTrasferire")',
+                    {
+                        recid: recid,
+                        dove: dove
+                    },
+                    function (data, success, xhr) {
+
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+
+                            var tr = $('#conferimento_recid_' + recid);
+                            var btn = $('#btnConferimento_recid_' + recid);
+                            var btnRim = $('#btnRimuoviConferimento_recid_' + recid);
+
+                            if (dove == 0) {
+                                btn.attr('onclick', 'SpostaConferimento(' + recid + ',1)');
+                                btn.html('Prenota');
+                                btn.removeClass('orange').addClass('green');
+                                // tr.appendTo($('#tabellaDisponibili'));
+                                btnRim.show();
+                            } else {
+                                btn.attr('onclick', 'SpostaConferimento(' + recid + ',0)');
+                                btn.html('Rimuovi');
+                                btn.removeClass('green').addClass('orange');
+                                // tr.appendTo($('#tabellaPrenotati'));
+                                btnRim.hide();
+                            }
+
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+        }
+
+        // rimuovi conferimento
+        function RimuoviConferimento(recid) {
+            $.post('@Url.Action("RimuoviConferimento", "DaTrasferire")',
+                    {
+                        recid: recid
+                    },
+                    function (data, success, xhr) {
+
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+
+                            $('#conferimento_recid_' + recid).remove();
+
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // accordion
+            $("#accordion").show().accordion({
+                active: false,
+                autoHeight: false,
+                collapsible: true
+            });
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left' };
+        });
+
+    </script>
+}

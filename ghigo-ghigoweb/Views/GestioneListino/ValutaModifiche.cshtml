@@ -1,0 +1,180 @@
+﻿@using GhigoWeb.Models
+@model GhigoWeb.Controllers.GestioneListinoController.ModificheViewModel
+
+<h3>Modifiche al listino</h3>
+
+@if (Model.Modifiche.Count() == 0)
+{
+    <h5>Nessuna modifica da valutare.</h5>
+}
+else
+{
+    <div id="accordion" class="hide">
+
+        @foreach (Tuple<string, string, string> kv in Model.Testate)
+        {
+            string codice_listino = kv.Item1;
+            string descrizione_listino = kv.Item2;
+            string note_modifiche = kv.Item3;
+
+            <h3 class="left" id="h3_@codice_listino">
+                Listino @codice_listino - @descrizione_listino @(string.IsNullOrEmpty(note_modifiche) ? string.Empty : "[NOTE: " + note_modifiche + "]")
+            </h3>
+            <div>
+                <table class="striped tight" id="tabellaListino_@codice_listino" style="font-size: x-small">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Articolo</th>
+                            <th rowspan="2" style="width: 99%; border-right: 1px solid gray">Descrizione</th>
+                            <th colspan="2" class="center" style="border-right: 1px solid gray">Costo</th>
+                            <th colspan="2" class="center" style="border-right: 1px solid gray">ListinoWeb</th>
+                            <th colspan="2" class="center" style="border-right: 1px solid gray">Gruppo</th>
+                            <th colspan="2" class="center" style="border-right: 1px solid gray">Minimo</th>
+                            <th colspan="2" rowspan="2" class="right">&nbsp;</th>
+                        </tr>
+                        <tr>
+                            <th class="right">Ora</th>
+                            <th class="right" style="border-right: 1px solid gray">Poi</th>
+
+                            <th class="right">Ora</th>
+                            <th class="right" style="border-right: 1px solid gray">Poi</th>
+
+                            <th class="right">Ora</th>
+                            <th class="right" style="border-right: 1px solid gray">Poi</th>
+
+                            <th class="right">Ora</th>
+                            <th class="right" style="border-right: 1px solid gray">Poi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Modifiche.Where(m => m.CodiceListino == codice_listino))
+                        {
+                            <tr>
+                                <td>@item.CodiceArticolo</td>
+                                <td style="width: 99%; border-right: 1px solid gray">@item.Descrizione</td>
+
+                                <td class="right">@item.CostoAcquisto</td>
+                                <td class="right" style="border-right: 1px solid gray; background-color: @(item.CostoAcquisto == item.CostoAcquistoProposto ? "transparent" : "yellow")">
+                                    @if (item.CostoAcquisto != item.CostoAcquistoProposto)
+                                    {
+                                        if(item.CostoAcquisto > item.CostoAcquistoProposto)
+                                        {
+                                            <img src="~/Images/ArrowDown.png" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/Images/ArrowUp.png" />
+                                        }
+                                    }
+                                    @item.CostoAcquistoProposto
+                                </td>
+
+                                <td class="right">@item.ListinoWeb</td>
+                                <td class="right" style="border-right: 1px solid gray; background-color: @(item.ListinoWeb == item.ListinoWebProposto ? "transparent" : "yellow")">
+                                    @if (item.ListinoWeb != item.ListinoWebProposto)
+                                    {
+                                        if (item.ListinoWeb > item.ListinoWebProposto)
+                                        {
+                                            <img src="~/Images/ArrowDown.png" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/Images/ArrowUp.png" />
+                                        }
+                                    }
+                                    @item.ListinoWebProposto
+                                </td>
+
+                                <td class="right">@item.GruppoMinimo</td>
+                                <td class="right" style="border-right: 1px solid gray; background-color: @(item.GruppoMinimo == item.GruppoMinimoProposto ? "transparent" : "yellow")">@item.GruppoMinimoProposto</td>
+
+                                <td class="right">@item.MinimoOrdinabile</td>
+                                <td class="right" style="border-right: 1px solid gray; background-color: @(item.MinimoOrdinabile == item.MinimoOrdinabileProposto ? "transparent" : "yellow")">
+                                    @if (item.MinimoOrdinabile != item.MinimoOrdinabileProposto)
+                                    {
+                                        if (item.MinimoOrdinabile > item.MinimoOrdinabileProposto)
+                                        {
+                                            <img src="~/Images/ArrowDown.png" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/Images/ArrowUp.png" />
+                                        }
+                                    }
+                                    @item.MinimoOrdinabileProposto
+                                </td>
+
+                                <td data-listino="@codice_listino"
+                                    data-articolo="@item.CodiceArticolo">
+                                    <button class="pop green"
+                                            style="width: 60px"
+                                            data-listino="@codice_listino"
+                                            data-articolo="@item.CodiceArticolo"
+                                            data-conferma="ok">
+                                        Ok
+                                    </button>
+                                </td>
+                                <td data-listino="@codice_listino"
+                                    data-articolo="@item.CodiceArticolo">
+                                    <button class="pop red"
+                                            style="width: 60px"
+                                            data-listino="@codice_listino"
+                                            data-articolo="@item.CodiceArticolo"
+                                            data-conferma="no">
+                                        No
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+
+        }
+
+    </div>
+}
+
+@section scripts {
+    <script type="text/javascript">
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // accordion
+            $("#accordion").show().accordion({
+                active: false,
+                autoHeight: false,
+                collapsible: true
+            });
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            // evento
+            $("button").click(function (e) {
+
+                var codice_listino = $(this).attr('data-listino');
+                var codice_articolo = $(this).attr('data-articolo');
+                var accetta = $(this).attr('data-conferma') == 'ok';
+
+                $.post('@Url.Action("ConfermaModifica", "GestioneListino")',
+                    {
+                        codice_listino: codice_listino,
+                        codice_articolo: codice_articolo,
+                        accetta: accetta
+                    },
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                            $('td[data-listino="' + codice_listino + '"][data-articolo="' + codice_articolo + '"]').empty().append(accetta ? 'ACCETTATO' : 'RIFIUTATO');
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+            });
+
+        });
+    </script>
+}

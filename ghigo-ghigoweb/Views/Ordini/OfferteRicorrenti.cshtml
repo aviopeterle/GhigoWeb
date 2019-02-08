@@ -1,0 +1,93 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<OffertaCliente>
+@{
+    ViewBag.Title = "Ordini Ricorrenti";
+}
+<br />
+
+@if (!string.IsNullOrEmpty(ViewBag.Cerca))
+{
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@ViewBag.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "OfferteRicorrenti", "Ordini", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+<br />
+<h3>Ordini ricorrenti</h3>
+
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Numero" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+    <table class="striped tight" id="tabellaOfferte">
+        <thead>
+            <tr>
+                <th>Numero</th>
+                <th>Data</th>
+                <th>Consegna</th>
+                <th>Stato</th>
+                <th>Ricorrenza</th>
+                <th>Quando</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+@foreach (var item in Model) {
+    @Html.Partial("_OfferteRicorrentiClientePartial", item)
+}
+          </tbody>
+    </table>
+
+
+@section scripts {
+    <script type="text/javascript">
+
+        function Aggiorna(data) {
+
+            var spanBtn = $('#spanAttivaDisattiva_recid_' + data.RecId);
+            var spanRicorrenza = $('#spanRicorrenza_recid_' + data.RecId);
+            var btn = $('#btnAttiva_recid_' + data.RecId);
+
+            if (data.Attivo) {
+                btn.removeClass('green').addClass('orange');
+                spanBtn.html("Disattiva");
+                spanRicorrenza.html("Si");
+            } else {
+                btn.removeClass('orange').addClass('green');
+                spanBtn.html("Attiva");
+                spanRicorrenza.html("No");
+            }
+        }
+        
+        function AttivaDisattiva(recid)
+        {
+            $.post('@Url.Action("AttivaDisattivaOffertaRicorrente")',
+                {
+                    recid: recid
+                },
+                function (data, success, xhr) {
+                    if (data.Successo) {
+                        toastr.success(data.Messaggio);
+                        Aggiorna(data);
+                    } else {
+                        toastr.error(data.Messaggio);
+                    }
+                }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+        }
+
+        
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            toastr.options = { positionClass: 'toast-top-left' };
+
+        });
+
+    </script>
+}

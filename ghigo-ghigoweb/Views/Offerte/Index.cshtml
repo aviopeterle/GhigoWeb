@@ -1,0 +1,393 @@
+﻿@model OfferteViewModel
+@{
+    ViewBag.Title = "Offerte";
+}
+<br />
+@if(!string.IsNullOrEmpty(Model.Cerca)) {
+    <text>
+    <span style="float: left">
+        Contenuto filtrato per '@Model.Cerca' &nbsp;
+        @Html.ActionLink("Togli filtro", "Index", "Offerte", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+    </span>
+    </text>
+}
+<div class="right">
+    <form method="get">
+        <label for="txtCerca">Cerca</label>
+        <input class="small" id="txtCerca" name="cerca" type="text" placeholder="Articolo, parola, barcode" style="width: 200px"/>
+        <input type="submit" value="Cerca" />
+    </form>
+</div>
+
+<div id="accordion" class="hide">
+
+@foreach (var numero_ordine in Model.NumeroOrdineOfferte.Keys)
+{
+    var prima_riga = Model.NumeroOrdineOfferte[numero_ordine][0];
+    <h3 class="left" id="h3_@numero_ordine">
+        Ord. @numero_ordine, chiude @prima_riga.DataChiusura.ToGhigoShortDateString(), consegna @prima_riga.DataConsegna.ToGhigoShortDateString()
+        @if(!string.IsNullOrEmpty(prima_riga.NoteFornitore)) 
+        {
+            var len = prima_riga.NoteFornitore.Length;
+            len = len > 40 ? 40 : len;
+            <u>&nbsp; @prima_riga.NoteFornitore.Substring(0, len) &nbsp;</u> 
+        }
+        @if (!string.IsNullOrEmpty(prima_riga.DescrizioneDepositoWeb))
+        {
+            <span style="font-size: smaller; color: red; float: right">&nbsp; @prima_riga.DescrizioneDepositoWeb &nbsp;</span>
+        }
+    </h3>
+    <div>
+    <table class="striped tight" id="tabellaOrdine_@numero_ordine" style="font-size: smaller">
+        <thead>
+            <tr>
+                <th>Articolo</th>
+                <th style="width: 99%">Descrizione</th>
+                <th class="center">Scadenza</th>
+                <th class="right">Prezzo</th>
+                <th class="right">Ricarico</th>
+                <th class="right">Richiesta</th>
+                <th class="right">Confermato</th>
+                <th class="center">Offerta</th>
+@if (Roles.IsUserInRole("GestioneOrdiniFornitoriDeposito"))
+{
+    <th class="center">Ordine</th>
+}
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.NumeroOrdineOfferte[numero_ordine])
+            {
+                @Html.Partial("_OffertaPartial", item);
+            }
+        </tbody>
+    </table>
+  </div>
+}
+
+</div>
+
+<div class="hide">
+    <form id="formOfferta" style="width: 400px" class="vertical">
+        <input type="hidden" id="formOfferta_recid" name="formOfferta_recid" />
+        <h5><span id="formOfferta_articolo">articolo</span></h5>
+        <br />
+        Minima scadenza lotto: <span id="formOfferta_datascadenza">data scadenza</span>
+        <fieldset>
+            <legend>Quantita Offerta</legend>
+            <table border="0">
+                <tr>
+                    <td>
+            <label for="txtQuantitaOffertaPrecedente">Precedente</label>
+            <input type="text" id="txtQuantitaOffertaPrecedente" style="width: 80px" class="right" disabled="disabled"/>
+                    </td>
+                    <td>
+            <label for="txtQuantitaOffertaAttuale">Attuale</label>
+            <input type="text" id="txtQuantitaOffertaAttuale" style="width: 80px" class="right"/>
+                    </td>
+                    <td>
+            <label for="txtQuantitaRichiestaResidua">Massima</label>
+            <input type="text" id="txtQuantitaRichiestaResidua" style="width: 80px" class="right" disabled="disabled"/>
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+        <button id="btnInviaOfferta" class="orange" style="float: right">Invia Offerta</button>
+    </form>
+</div>
+
+<div class="hide">
+    <form id="formOrdine" style="width: 400px" class="vertical">
+@if (Model.OrdiniFornitoriDepositiDisponibili)
+{
+    <input type="hidden" id="formOrdine_recid" name="formOrdine_recid" />
+        <h5>Ordine di <span id="formOrdine_articolo">articolo</span></h5>
+        <br />
+        <fieldset>
+            <legend>Da ordinare</legend>
+            <table border="0">
+                <tr>
+                    <td>
+                        <label for="txtQuantitaDaOrdinare">Quantità</label>
+                        <input type="text" id="txtQuantitaDaOrdinare" style="width: 80px" class="right" />
+                    </td>
+                    <td>
+                        <label for="txtPrezzoDaOrdinare">Prezzo</label>
+                        <input type="text" id="txtPrezzoDaOrdinare" style="width: 120px" class="right" />
+                    </td>
+                </tr>
+            </table>
+            <label for="txtOrdiniFornitoriDepositiDisponibili">Ordine fornitore</label>
+            @Html.DropDownList("OrdiniFornitoriDepositiDisponibili", ViewData["OrdiniFornitoriDepositiDisponibili"] as SelectList, new { id= "selOrdiniFornitoriDepositiDisponibili" })
+            <button id="btnCreaNuovoOrdine" class="orange" style="float: right" onclick="CreaNuovoOrdine(event)">Nuovo</button>
+        </fieldset>
+        <button id="btnInviaOrdine" class="orange" style="float: right">Conferma l'ordine</button>
+}
+else
+{
+    <h5>Per ordinare è necessario avere prima creato un ordine con stato NUOVO</h5>
+    @Html.ActionLink("Vai agli ordini", "Index", "OrdiniFornitoreDeposito", routeValues: null, htmlAttributes: new { @class = "btn small blue" })
+}
+    </form>
+</div>
+
+<div class="hide">
+    <form id="formNuovoOrdine" style="width: 450px" class="vertical">
+        <fieldset>
+            <legend>Nuovo ordine fornitore</legend>
+            <input type="hidden" name="CodiceAzienda" value="@ViewData["CodiceAzienda"]" />
+            <input type="hidden" name="CodiceDeposito" value="@ViewData["CodiceDeposito"]" />
+            <label for="txtCodiceFornitore">Fornitore</label>
+            @Html.DropDownList("CodiceAnagrafica", ViewData["CodiceAnagrafica"] as SelectList)
+            <label for="txtCodicePagamento">Pagamento</label>
+            @Html.DropDownList("CodicePagamento", ViewData["CodicePagamento"] as SelectList)
+            <label for="txtDataConsegna">Data di consegna</label>
+            <input type="text" id="txtDataConsegna" name="DataConsegna" style="width: 200px" value="@DateTime.Today.ToShortDateString()" />
+            <label for="txtNote">Note</label>
+            <input type="text" id="txtNote" name="Note" />
+        </fieldset>
+        <button id="btnConfermaNuovoOrdine" class="orange" style="float: right">Crea nuovo ordine</button>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+        // data aggiornamento
+        var quando = @Model.Quando;
+
+        // richiamo dialog
+        function ApriDialog(recid) {
+            $('#formOfferta_recid').val(recid);
+
+            var precedente = parseInt($('#QuantitaOfferta_recid_' + recid).html());
+            var massima = parseInt($('#QuantitaRichiestaResidua_recid_' + recid).html());
+            var articolo = $('#Articolo_recid_' + recid).html();
+            var datascadenza = $('#DataScadenza_recid_' + recid).html();
+            var lotto = $('#Lotto_recid_' + recid).val();
+            var scadenzalotto = $('#ScadenzaLotto_recid_' + recid).val();
+
+            $('#txtQuantitaOffertaPrecedente').val(precedente);
+            $('#txtQuantitaOffertaAttuale').val(precedente);
+            $('#txtQuantitaRichiestaResidua').val(massima);
+
+            $('#formOfferta_articolo').html(articolo);
+            $('#formOfferta_datascadenza').html(datascadenza);
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formOfferta'
+            });
+
+            $('#txtQuantitaOffertaAttuale').focus().select();
+        }
+
+        // richiamo dialog ordine
+        function ApriDialogQtaOrdinare(recid) {
+            $('#formOrdine_recid').val(recid);
+
+            var articolo = $('#Articolo_recid_' + recid).html();
+            var qtadaordinare = parseInt($('#QuantitaDaOrdinare_recid_' + recid).html());
+            var prezzodaordinare = $('#PrezzoDaOrdinare_recid_' + recid).val();
+
+            $('#txtQuantitaDaOrdinare').val(qtadaordinare);
+            $('#txtPrezzoDaOrdinare').val(prezzodaordinare);
+
+            $('#formOrdine_articolo').html(articolo);
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formOrdine'
+            });
+
+            $('#txtQuantitaDaOrdinare').focus().select();
+        }
+
+        function CreaNuovoOrdine(e) {
+            e.preventDefault();
+
+            $.fancybox({
+                overlayShow: true,
+                autoDimensions: true,
+                href: '#formNuovoOrdine'
+            });
+
+            $('#txtCodiceFornitore').focus().select();
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+
+            // accordion
+            $( "#accordion" ).show().accordion({
+                active: false,
+                autoHeight: false,
+                collapsible: true
+            });
+
+            @if(!string.IsNullOrEmpty(Model.ApriOrdine))
+            {
+                <text>
+            // apri subito l'ordine
+            $("#accordion").accordion("activate", $("#h3_@Model.ApriOrdine"));
+            $('html, body').animate({
+                scrollTop: $("#h3_@Model.ApriOrdine").offset().top
+            }, 2000);
+                </text>
+            }
+
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            // input solo numerici
+            $("#txtQuantitaOfferta").numeric({ decimal: false, negative: false });
+            $("#txtQuantitaDaOrdinare").numeric({ decimal: false, negative: false });
+            $("#txtPrezzoDaOrdinare").numeric({ decimal: true, negative: false });
+
+            // date su scadenza lotto
+            $('#txtScadenzaLotto').datepicker($.datepicker.regional['it']);
+
+            // invio offerta
+            $("#btnInviaOfferta").click(function () {
+
+                $.fancybox.close();
+
+                var recid = parseInt($('#formOfferta_recid').val());
+                var value = parseInt($('#txtQuantitaOffertaAttuale').val());
+                if(isNaN(value))
+                {
+                    $(this).val(0);
+                    value = 0;
+                }
+
+                $.post('@Url.Action("SalvaQtaOfferta")',
+                    {
+                        recid: recid,
+                        value: value
+                    },
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                        AggiornaItem(data);
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+                return false;
+            });
+
+            // invio ordine
+            $("#btnInviaOrdine").click(function () {
+
+                $.fancybox.close();
+
+                var recid = parseInt($('#formOrdine_recid').val());
+                var ordine = $('#selOrdiniFornitoriDepositiDisponibili').val();
+                var qta = parseInt($('#txtQuantitaDaOrdinare').val());
+                if(isNaN(qta))
+                {
+                    qta = 0;
+                }
+                var prezzo = parseFloat($('#txtPrezzoDaOrdinare').val().replace(',','.'));
+                if(isNaN(prezzo))
+                {
+                    prezzo = 0;
+                }
+
+                $.post('@Url.Action("SalvaQtaDaOrdinare")',
+                    {
+                        recid: recid,
+                        ordine: ordine,
+                        qta: qta,
+                        prezzo: prezzo
+                    },
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                        AggiornaItem(data);
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+                return false;
+            });
+
+            // crea nuovo ordine
+            $("#btnConfermaNuovoOrdine").click(function (e) {
+                $.post('@Url.Action("Nuovo", "OrdiniFornitoreDeposito")',
+                    $('#formNuovoOrdine').serialize(),
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                            $('#selOrdiniFornitoriDepositiDisponibili').append($('<option>', {
+                                value: data.RecId,
+                                text: data.Descrizione
+                            }));
+                            $('#selOrdiniFornitoriDepositiDisponibili').val(data.RecId);
+
+                            $.fancybox({
+                                overlayShow: true,
+                                autoDimensions: true,
+                                href: '#formOrdine'
+                            });
+
+                            $('#txtQuantitaDaOrdinare').focus().select();
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+                return false;
+            });
+
+            // refresh continuo ogni 10 sec
+            setInterval(function() {
+
+                $.post('@Url.Action("AggiornaElencoOfferte")', { quando : quando },
+                    function (data, success, xhr) {
+                        if(data.Quando > 0) quando = data.Quando;
+                        for (var i = 0; i < data.Items.length; i++)
+                        {
+                            AggiornaItem(data.Items[i]);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+            }, 1000 * 10);
+
+        });
+
+        // aggiorna item
+        function AggiornaItem(data) {
+            if(data.RecId == 0) return;
+
+            var trovato = $('#offerta_recid_' + data.RecId).length > 0;
+            if(trovato) {
+                $('#QuantitaConfermata_recid_' + data.RecId).html(data.QuantitaConfermata);
+                $('#QuantitaOfferta_recid_' + data.RecId).html(data.QuantitaOfferta);
+                $('#QuantitaRichiestaResidua_recid_' + data.RecId).html(data.QuantitaRichiestaResidua);
+
+                $('#QuantitaDaOrdinare_recid_' + data.RecId).html(data.QuantitaDaOrdinare);
+                $('#PrezzoDaOrdinare_recid_' + data.RecId).val(data.PrezzoDaOrdinare);
+
+                if(data.QuantitaRichiestaResidua <= 0) {
+                    $('#btnQuantitaOfferta_recid_' + data.RecId).prop('disabled', true).removeClass('green');
+                } else {
+                    $('#btnQuantitaOfferta_recid_' + data.RecId).prop('disabled', false).addClass('green');
+                }
+
+                $('#ScadenzaLotto_recid_' + data.RecId).val(data.ScadenzaLotto);
+
+                if(!data.Visibile) {
+                    $('#offerta_recid_' + data.RecId).remove();
+                } else {
+                    $('#offerta_recid_' + data.RecId).effect("highlight", {}, 3000);
+                }
+            }
+
+        }
+    </script>
+}

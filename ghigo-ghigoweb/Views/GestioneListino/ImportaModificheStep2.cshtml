@@ -1,0 +1,28 @@
+﻿@{
+    ViewBag.Title = "ImportaModificheStep2";
+}
+
+<h2>Importa le modifiche al listino da excel (Passo 2)</h2>
+
+Siete pregati di selezionare tutte le celle partendo da A1 fino alla colonna I, alla riga dell'ultimo listino da modificare.
+Come nella foto sottostante:
+<br /><br />
+
+
+<img src="~/Images/Esempio file Excel Importazione Modifiche Selezione.PNG" />
+
+<br /><br />
+
+Adesso copiate la selezione, ad esempio cliccando col tasto dentro nella selezione poi scegliendo COPIA dal menu contestuale.
+
+<br /><br />
+
+<img src="~/Images/Esempio file Excel Importazione Modifiche Copia.PNG" />
+
+
+<table border="0">
+    <tr>
+        <td width="50%" style="text-align: left">@Html.ActionLink("Torna al passo precedente", "ImportaModifiche", null, new { @class = "btn pop orange" })</td>
+        <td width="50%" style="text-align: right">@Html.ActionLink("Vai al passo successivo", "ImportaModificheStep3", null, new { @class = "btn pop blue" })</td>
+    </tr>
+</table>

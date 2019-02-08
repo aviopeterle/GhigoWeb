@@ -1,0 +1,84 @@
+﻿@using GhigoWeb.Models
+@model IEnumerable<OffertaClienteDettaglio>
+@{
+    var prima_riga = Model.ElementAtOrDefault(0);
+    ViewBag.Title = string.Format("Ordine: {0}", prima_riga != null ? prima_riga.NumeroOfferta : string.Empty);
+}
+<br />
+
+<h3>@ViewBag.Title</h3>
+
+<form id="formModificheOfferta">
+    <input type="hidden" id="hidOffertaRecId" name="hidOffertaRecId" value="@ViewBag.OffertaRecId" />
+<table class="striped tight" id="tabellaOfferte">
+    <thead>
+        <tr>
+            <th>Riga</th>
+            <th>Codice</th>
+            <th>Descrizione</th>
+            <th class="center">Scadenza</th>
+            <th class="right">Prezzo Confermato</th>
+            <th class="right">Quantita Confermata</th>
+            <th class="right">Prezzo Richiesto</th>
+            <th class="right">Quantita Richiesta</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+@Html.Partial("_OffertaClienteDettaglioValutazioneClientePartial", item)
+}
+        </tbody>
+</table>
+</form>
+
+@Html.ActionLink("Torna all'elenco", "Offerte", "Ordini", routeValues: new {  }, htmlAttributes: new { @class = "btn small blue" })
+
+@Html.ActionLink("Annulla l'ordine", "AnnullaOfferta", "Ordini", routeValues: new { recid = ViewBag.OffertaRecId }, htmlAttributes: new { @class = "btn small red", onclick = "return confirm('Vuoi davvero annullare questa offerta?')" })
+
+<button id="btnModificaOfferta"
+    class="small pop green">
+    Conferma le quantità e i prezzi inseriti
+</button>
+
+@section scripts {
+    <script src="~/Scripts/jquery.numeric.js"></script>
+    <script type="text/javascript">
+
+        // annullamento qta
+        function EliminaQta(recid) {
+            $('#txtQuantita_recid_' + recid).val(0);
+            $('#offertadettaglio_recid_' + recid).css("background-color", "grey");
+        }
+
+        // quando il dom e' pronto
+        $(document).ready(function () {
+            // toastr in altro a sx
+            toastr.options = { positionClass: 'toast-top-left' };
+
+            // input solo numerici
+            $("input[id^='txtQuantita']").numeric({ decimal: false, negative: false });
+            $("input[id^='txtPrezzoRichiesto']").numeric({ decimal: ',', negative: false });
+            
+            // invio modifiche
+            $("#btnModificaOfferta").click(function (e) {
+                e.preventDefault();
+                $.post('@Url.Action("ModificaOfferta")',
+                    $('#formModificheOfferta').serialize(),
+                    function (data, success, xhr) {
+                        if (data.Successo) {
+                            toastr.success(data.Messaggio);
+                            setTimeout(function () {
+                                document.location.href = '@Url.Action("Offerte")';
+                            }, 1000);
+                        } else {
+                            toastr.error(data.Messaggio);
+                        }
+                    }, 'json').fail(function () { toastr.error("Errore nella comunicazione con il server."); });
+
+                return false;
+            });
+        });
+
+    </script>
+}
